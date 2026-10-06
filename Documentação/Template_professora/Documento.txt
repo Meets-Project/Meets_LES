@@ -1,0 +1,80 @@
+Requisitos para a matéria de Laboratório de Engenharia de Software
+
+Documento de Visão
+Diagrama de Atividades do negócio
+Requisitos Funcionais, Requisitos não funcionais, regras de negócio
+Matriz de relacionamento RN x RF
+Diagrama de Entidade e Relacionamento
+Diagrama de Classe
+Diagrama geral de caso de uso
+Especificação do caso de uso
+Diagrama de Sequencia
+
+
+
+
+
+Todos os integrantes devem apresentar tanto a parte documentacional quanto a parte prática;
+
+Obrigatório a presença de todos integrantes no dia do agendamento;
+
+Todas as aulas contarão presença;
+
+Não será possível mudança de projeto ou de equipe prestes a apresentação;
+
+Não é permitido dois trabalhos iguais ou semelhantes;
+
+Alunos que não fizerem a apresentação conforme solicitado ou não apresentarem na feira estarão automaticamente reprovados;
+
+Alunos que fizerem as apresentações dependerão das avaliações para serem aprovados;
+
+Obrigatório documentação bater com programação;
+
+Obrigatório linguagem orientada à objetos e a documentação com base na UML;
+
+Alunos que não comparecem nas aulas poderão reprovar por faltas;
+
+Alunos que não vierem no agendamento e o orientador não conseguir acompanhar o projeto terão suas notas subtraídas;
+
+Essa disciplina é de acompanhamento e não aula de conteúdo, o professor/orientador tem o objetivo de orientar sobre o projeto;
+
+Obrigatório a confecção do banner para a feira, o padrão será apresentado nas próximas aulas e colocado aqui no teams
+
+Obrigatório o software estar funcionando e ser possível a utilização;
+
+Pode ser utilizado o projeto integrador e o mesmo ser melhorado utilizando recursos do mobile, todo projeto será validado pelo orientador;
+
+============================================================================ 
+
+Requisitos de Projeto:
+
+Sistema deve atender uma necessidade de negócio;
+
+Projeto deve ser aprovado pelo orientador;
+
+Necessário ter automatizações (caso de uso de condução), à definir com o orientador;
+
+Necessário ter caso de uso de análise que apoiem o negócio;
+
+Necessário ter casos de uso básicos para sustentar o projeto;
+
+Necessário ter todos os documentos consistentes com a programação;
+
+Códigos com padrões de desenvolvimento e divididos em camadas;
+
+
+
+Documentos à serem entregues com base na norma ABNT:
+
+
+
+Documento de Visão
+Diagrama de Atividades do negócio
+Requisitos Funcionais, Requisitos não funcionais, regras de negócio
+Matriz de relacionamento RN x RF
+Diagrama de Entidade e Relacionamento 
+MER
+Diagrama de Classe
+Diagrama geral de caso de uso
+Especificação do caso de uso
+Diagrama de Sequencia
