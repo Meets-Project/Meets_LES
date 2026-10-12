@@ -24,12 +24,6 @@ digraph UC {
     uc015 [label="#015 Lembrar Avaliação Pendente", fillcolor="#e8f3e3"];
   }
 
-  // legenda
-  subgraph cluster_leg { label="Tipo"; fontsize=11; style=dashed; color="#999999";
-    node [shape=box, style=filled, fontsize=10, width=1.2];
-    l1 [label="Básico", fillcolor="#f4f4f4"]; l2 [label="Análise", fillcolor="#e3ecf7"]; l3 [label="Condução\n(automação)", fillcolor="#e8f3e3"];
-    l1 -> l2 -> l3 [style=invis];
-  }
 
   VIS -> uc014; VIS -> uc001;
   USR -> {uc002 uc003 uc004 uc005 uc006 uc007 uc008 uc009 uc010 uc011 uc016 uc017 uc018 uc019 uc020 uc021 uc022};
@@ -41,5 +35,4 @@ digraph UC {
 
   VIS -> USR -> ADM [style=invis];
   {rank=same; VIS; USR; ADM;}
-  uc015 -> l1 [style=invis];
 }
