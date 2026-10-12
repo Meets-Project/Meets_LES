@@ -7,7 +7,10 @@ import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { query as defaultQuery } from './db.js';
 import { makeRepository } from './repository.js';
-import { DEACTIVATED_MESSAGE, makeAuth, requireAdmin, signToken } from './auth.js';
+import { makeAdminRepository } from './adminRepository.js';
+import { makeModeration, ModerationError } from './services/moderation.js';
+import { registerAdminRoutes } from './routes/adminRoutes.js';
+import { DEACTIVATED_MESSAGE, makeAuth, signToken } from './auth.js';
 
 function verificationToken() {
   return crypto.randomBytes(32).toString('hex');
@@ -142,6 +145,8 @@ export function createApp({ query = defaultQuery } = {}) {
   const app = express();
   const db = { query };
   const repo = makeRepository(db);
+  const adminRepo = makeAdminRepository(db);
+  const moderation = makeModeration({ repo, adminRepo });
   const { requireAuth, optionalAuth } = makeAuth(db);
 
   app.use(helmet());
@@ -527,9 +532,15 @@ export function createApp({ query = defaultQuery } = {}) {
     try { res.json({ data: { favorite: await repo.toggleFavorite(req.auth.sub, req.params.id) } }); } catch (e) { next(e); }
   });
 
+  // O autor exclui o próprio conteúdo; um administrador pode excluir o de qualquer pessoa (moderação).
   app.delete('/posts/:id', requireAuth, async (req, res, next) => {
     try {
       const deleted = await repo.deleteOwnPost(req.auth.sub, req.params.id);
+      if (!deleted && req.auth.isAdmin) {
+        const reason = String(req.body?.reason || '').slice(0, 255);
+        await moderation.removeContent(req.auth.sub, { type: 'post', id: req.params.id, reason });
+        return res.json({ data: { deleted: true, moderated: true } });
+      }
       if (!deleted) return res.status(404).json({ message: 'Publicação não encontrada ou sem permissão.' });
       await repo.addHistory(req.auth.sub, { type: 'post_deleted', title: 'Excluiu uma publicação', subtitle: req.params.id });
       res.json({ data: { deleted: true } });
@@ -653,9 +664,15 @@ export function createApp({ query = defaultQuery } = {}) {
     } catch (e) { next(e); }
   });
 
+  // O autor exclui o próprio conteúdo; um administrador pode excluir o de qualquer pessoa (moderação).
   app.delete('/events/:id', requireAuth, async (req, res, next) => {
     try {
       const deleted = await repo.deleteOwnEvent(req.auth.sub, req.params.id);
+      if (!deleted && req.auth.isAdmin) {
+        const reason = String(req.body?.reason || '').slice(0, 255);
+        await moderation.removeContent(req.auth.sub, { type: 'event', id: req.params.id, reason });
+        return res.json({ data: { deleted: true, moderated: true } });
+      }
       if (!deleted) return res.status(404).json({ message: 'Evento não encontrado ou sem permissão.' });
       await repo.addHistory(req.auth.sub, { type: 'event_deleted', title: 'Excluiu um evento', subtitle: req.params.id });
       res.json({ data: { deleted: true } });
@@ -744,7 +761,10 @@ export function createApp({ query = defaultQuery } = {}) {
     } catch (e) { next(e); }
   });
 
+  registerAdminRoutes(app, { repo, adminRepo, moderation, requireAuth });
+
   app.use((err, _req, res, _next) => {
+    if (err instanceof ModerationError) return res.status(err.status).json({ message: err.message, code: err.code });
     if (err instanceof z.ZodError) return res.status(400).json({ message: 'Dados inválidos.', details: err.issues });
     if (err.code === 'SMTP_NOT_CONFIGURED') return res.status(503).json({ message: err.message });
     if (err.code === 'SELF_RATING') return res.status(400).json({ message: err.message });

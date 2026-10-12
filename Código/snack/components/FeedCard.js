@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, Text, TouchableOpacity, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../styles/colors';
 import { feedCardStyles } from '../styles/feedCardStyles';
-import { getEventParticipants, participateEvent, toggleConnection, toggleLike, toggleSave } from '../services/api';
+import { adminRemoveContent, getEventParticipants, participateEvent, toggleConnection, toggleLike, toggleSave } from '../services/api';
+import { getCurrentUser, isAdmin } from '../services/session';
+import { confirmAction, notify } from '../utils/confirm';
+import { ContentActionsMenu } from './ContentActionsMenu';
 import { CommentsModal } from './CommentsModal';
 import { shareContent } from '../services/share';
 import { AvatarImage, isImageUri } from './AvatarImage';
@@ -24,6 +27,15 @@ export function FeedCard({ item, onRefresh }) {
   const [loadingParticipants, setLoadingParticipants] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [commentsCount, setCommentsCount] = useState(Number(item.comments_count || 0));
+  const [currentUser, setCurrentUser] = useState(null);
+  const [showMenu, setShowMenu] = useState(false);
+  const [removed, setRemoved] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    getCurrentUser().then((u) => { if (active) setCurrentUser(u); }).catch(() => {});
+    return () => { active = false; };
+  }, []);
 
   const isPresentation = item.type === 'presentation';
   const isEvent = item.type === 'event';
@@ -130,6 +142,25 @@ export function FeedCard({ item, onRefresh }) {
     });
   }
 
+  const isOwn = Boolean(currentUser?.id && authorId && currentUser.id === authorId);
+  const menuOptions = [];
+  if (isAdmin(currentUser) && !isOwn) {
+    menuOptions.push({ id: 'moderate', label: 'Remover (moderação)', icon: 'delete-alert-outline', danger: true, onPress: handleAdminRemove });
+  }
+
+  async function handleAdminRemove() {
+    const kind = isEvent ? 'evento' : 'publicação';
+    const ok = await confirmAction('Remover conteúdo', `Remover este(a) ${kind} de ${authorName}? O autor será avisado.`, 'Remover');
+    if (!ok) return;
+    try {
+      await adminRemoveContent(isEvent ? 'event' : 'post', item.id, 'Removido pela moderação');
+      setRemoved(true);
+      onRefresh?.();
+    } catch (e) {
+      notify('Erro', e.message || 'Não foi possível remover.');
+    }
+  }
+
   function handleOpenMentionedEvent() {
     if (mentionedEvent?.id) {
       navigation.navigate('EventDetail', {
@@ -138,6 +169,8 @@ export function FeedCard({ item, onRefresh }) {
       });
     }
   }
+
+  if (removed) return null;
 
   return (
     <View style={feedCardStyles.card}>
@@ -194,6 +227,12 @@ export function FeedCard({ item, onRefresh }) {
                 {isEvent ? '📅 Evento' : '🎤 Apresentação'}
               </Text>
             </View>
+          ) : null}
+
+          {menuOptions.length ? (
+            <TouchableOpacity onPress={() => setShowMenu(true)} accessibilityLabel="Mais opções" hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <MaterialCommunityIcons name="dots-vertical" size={20} color={colors.textMuted} />
+            </TouchableOpacity>
           ) : null}
         </View>
       </View>
@@ -425,6 +464,13 @@ export function FeedCard({ item, onRefresh }) {
           <Text style={{ color: colors.primary, fontWeight: '900' }}>Avaliar {isEvent ? 'evento' : 'apresentação'}</Text>
         </TouchableOpacity>
       ) : null}
+
+      <ContentActionsMenu
+        visible={showMenu}
+        onClose={() => setShowMenu(false)}
+        title={item.title || item.content || 'Publicação'}
+        options={menuOptions}
+      />
 
       {/* Comments Modal */}
       <CommentsModal

@@ -9,7 +9,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "migrate": "node src/migrate.js",
-    "rollback": "node src/rollback.js"
+    "rollback": "node src/rollback.js",
+    "make-admin": "node src/makeAdmin.js"
   },
   "engines": {
     "node": ">=20"

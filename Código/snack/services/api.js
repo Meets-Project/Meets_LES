@@ -3,6 +3,7 @@ import { getBackendBaseUrl } from '../data/apiConfig';
 
 const TOKEN_KEY = '@meets/auth_token';
 let unauthorizedHandler = null;
+let tokenChangeHandler = null;
 
 export function onUnauthorized(handler) {
   unauthorizedHandler = handler;
@@ -45,6 +46,7 @@ async function requestJson(path, options = {}) {
     error.details = body?.details;
     if (response.status === 401) {
       await AsyncStorage.removeItem(TOKEN_KEY);
+      tokenChangeHandler?.();
       try { unauthorizedHandler?.(); } catch {}
     }
     throw error;
@@ -52,8 +54,9 @@ async function requestJson(path, options = {}) {
   return body;
 }
 
-export async function setToken(token) { await AsyncStorage.setItem(TOKEN_KEY, token); }
-export async function clearToken() { await AsyncStorage.removeItem(TOKEN_KEY); }
+export function onTokenChange(handler) { tokenChangeHandler = handler; }
+export async function setToken(token) { await AsyncStorage.setItem(TOKEN_KEY, token); tokenChangeHandler?.(); }
+export async function clearToken() { await AsyncStorage.removeItem(TOKEN_KEY); tokenChangeHandler?.(); }
 export async function hasToken() { return !!(await AsyncStorage.getItem(TOKEN_KEY)); }
 
 export async function login(email, password) {
@@ -219,3 +222,19 @@ export async function deleteComment(commentId) {
 }
 
 export async function getMyPosts() { return (await requestJson('/posts/mine')).data; }
+
+// --- ADMINISTRAÇÃO (somente administradores) ---
+function queryString(params = {}) {
+  const q = Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== '');
+  return q.length ? `?${q.map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&')}` : '';
+}
+export async function adminListUsers(params = {}) { return (await requestJson(`/admin/users${queryString(params)}`)).data; }
+export async function adminGetUser(id) { return (await requestJson(`/admin/users/${encodeURIComponent(id)}`)).data; }
+export async function adminCreateUser(payload) { return (await requestJson('/admin/users', { method: 'POST', body: JSON.stringify(payload) })).data; }
+export async function adminUpdateUser(id, payload) { return (await requestJson(`/admin/users/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(payload) })).data; }
+export async function adminDeactivateUser(id, reason = '') { return (await requestJson(`/admin/users/${encodeURIComponent(id)}/deactivate`, { method: 'POST', body: JSON.stringify({ reason }) })).data; }
+export async function adminReactivateUser(id) { return (await requestJson(`/admin/users/${encodeURIComponent(id)}/reactivate`, { method: 'POST', body: JSON.stringify({}) })).data; }
+export async function adminRemoveContent(type, id, reason = '') {
+  const path = type === 'event' ? `/events/${encodeURIComponent(id)}` : `/posts/${encodeURIComponent(id)}`;
+  return (await requestJson(path, { method: 'DELETE', body: JSON.stringify({ reason }) })).data;
+}
