@@ -3,6 +3,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { newDb } from 'pg-mem';
+import request from 'supertest';
+import { createApp } from '../src/app.js';
 
 export const migrationDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'migrations');
 
@@ -42,3 +44,17 @@ export async function createTestDb() {
   const { Pool } = mem.adapters.createPg();
   return { mem, db: new Pool() };
 }
+
+// App ligado ao banco de teste.
+export async function createTestApp() {
+  const { mem, db } = await createTestDb();
+  const app = createApp({ query: (text, params) => db.query(text, params) });
+  return { mem, db, app };
+}
+
+export async function signup(app, { name = 'Pessoa Teste', email = 'pessoa@example.com', password = 'senha123' } = {}) {
+  const res = await request(app).post('/auth/signup').send({ name, email, password });
+  return { res, token: res.body?.data?.token, user: res.body?.data?.user };
+}
+
+export const auth = (token) => ({ Authorization: `Bearer ${token}` });
