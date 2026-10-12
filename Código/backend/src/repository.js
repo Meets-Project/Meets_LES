@@ -814,7 +814,7 @@ export function makeRepository(db) {
         WHERE (p.type='presentation' OR p.presentation_id IS NOT NULL)
           AND p.event_date IS NOT NULL AND p.event_end_time IS NOT NULL
           AND p.mentioned_event_id IS NOT NULL
-      `, [userId]);
+      `);
       const participantEvents = new Set((await many(`SELECT event_id FROM event_participants WHERE user_id=$1`, [userId])).map((r) => r.event_id));
       for (const p of presentations.filter((row) => hasEnded(row.event_date, row.event_end_time) && participantEvents.has(row.mentioned_event_id))) {
         const exists = await one(`SELECT 1 FROM notifications WHERE user_id=$1 AND ((target_type='presentation-rating' AND target_id=$2) OR body LIKE 'rating-presentation:' || $2 || ':%')`, [userId, p.id]);
