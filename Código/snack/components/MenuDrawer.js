@@ -66,7 +66,11 @@ export function MenuDrawer({ isOpen, onClose, onSelectItem }) {
     avatar: currentUser?.avatar || '🙂',
   };
   const items = isAdmin(currentUser)
-    ? [...menuItems, { id: 'AdminUsers', label: 'Administração', icon: 'shield-account' }]
+    ? [
+        ...menuItems,
+        { id: 'AdminUsers', label: 'Manter usuários', icon: 'shield-account' },
+        { id: 'AdminReports', label: 'Denúncias', icon: 'flag-outline' },
+      ]
     : menuItems;
 
   return (

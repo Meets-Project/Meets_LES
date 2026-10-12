@@ -8,6 +8,7 @@ import { adminRemoveContent, getEventParticipants, participateEvent, toggleConne
 import { getCurrentUser, isAdmin } from '../services/session';
 import { confirmAction, notify } from '../utils/confirm';
 import { ContentActionsMenu } from './ContentActionsMenu';
+import { ReportModal } from './ReportModal';
 import { CommentsModal } from './CommentsModal';
 import { shareContent } from '../services/share';
 import { AvatarImage, isImageUri } from './AvatarImage';
@@ -30,6 +31,7 @@ export function FeedCard({ item, onRefresh }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [showMenu, setShowMenu] = useState(false);
   const [removed, setRemoved] = useState(false);
+  const [showReport, setShowReport] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -144,6 +146,9 @@ export function FeedCard({ item, onRefresh }) {
 
   const isOwn = Boolean(currentUser?.id && authorId && currentUser.id === authorId);
   const menuOptions = [];
+  if (currentUser && !isOwn) {
+    menuOptions.push({ id: 'report', label: 'Denunciar', icon: 'flag-outline', onPress: () => setShowReport(true) });
+  }
   if (isAdmin(currentUser) && !isOwn) {
     menuOptions.push({ id: 'moderate', label: 'Remover (moderação)', icon: 'delete-alert-outline', danger: true, onPress: handleAdminRemove });
   }
@@ -470,6 +475,14 @@ export function FeedCard({ item, onRefresh }) {
         onClose={() => setShowMenu(false)}
         title={item.title || item.content || 'Publicação'}
         options={menuOptions}
+      />
+
+      <ReportModal
+        visible={showReport}
+        onClose={() => setShowReport(false)}
+        targetType={isEvent ? 'event' : 'post'}
+        targetId={item.id}
+        targetTitle={item.title || item.content}
       />
 
       {/* Comments Modal */}

@@ -38,6 +38,8 @@ import { AboutScreen } from '../screens/AboutScreen';
 import { EmailVerificationScreen } from '../screens/EmailVerificationScreen';
 import { AdminUsersScreen } from '../screens/AdminUsersScreen';
 import { AdminUserFormScreen } from '../screens/AdminUserFormScreen';
+import { AdminReportsScreen } from '../screens/AdminReportsScreen';
+import { AdminReportDetailScreen } from '../screens/AdminReportDetailScreen';
 import { menuItems } from '../data/menuItens';
 import { icons } from '../data/icons';
 import { colors } from '../styles/colors';
@@ -113,6 +115,8 @@ export default function AppNavigation() {
       SharedContent: 'Conteúdo compartilhado',
       AdminUsers: 'Manter usuários',
       AdminUserForm: 'Usuário',
+      AdminReports: 'Denúncias',
+      AdminReportDetail: 'Analisar denúncia',
     };
     if (detailTitles[routeName]) return detailTitles[routeName];
     const menu = menuItems.find((m) => m.id === routeName);
@@ -198,6 +202,8 @@ export default function AppNavigation() {
           <Stack.Screen name="SharedContent" component={SharedContentScreen} />
           <Stack.Screen name="AdminUsers" component={AdminUsersScreen} />
           <Stack.Screen name="AdminUserForm" component={AdminUserFormScreen} />
+          <Stack.Screen name="AdminReports" component={AdminReportsScreen} />
+          <Stack.Screen name="AdminReportDetail" component={AdminReportDetailScreen} />
 
           <Stack.Screen name="favorites" component={FavoritesScreen} />
           <Stack.Screen name="history" component={HistoryScreen} />

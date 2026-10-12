@@ -10,6 +10,8 @@ import { makeRepository } from './repository.js';
 import { makeAdminRepository } from './adminRepository.js';
 import { makeModeration, ModerationError } from './services/moderation.js';
 import { registerAdminRoutes } from './routes/adminRoutes.js';
+import { makeReportsRepository } from './reportsRepository.js';
+import { registerReportRoutes } from './routes/reportRoutes.js';
 import { DEACTIVATED_MESSAGE, makeAuth, signToken } from './auth.js';
 
 function verificationToken() {
@@ -146,6 +148,7 @@ export function createApp({ query = defaultQuery } = {}) {
   const db = { query };
   const repo = makeRepository(db);
   const adminRepo = makeAdminRepository(db);
+  const reportsRepo = makeReportsRepository(db);
   const moderation = makeModeration({ repo, adminRepo });
   const { requireAuth, optionalAuth } = makeAuth(db);
 
@@ -762,6 +765,7 @@ export function createApp({ query = defaultQuery } = {}) {
   });
 
   registerAdminRoutes(app, { repo, adminRepo, moderation, requireAuth });
+  registerReportRoutes(app, { repo, reportsRepo, moderation, adminRepo, requireAuth });
 
   app.use((err, _req, res, _next) => {
     if (err instanceof ModerationError) return res.status(err.status).json({ message: err.message, code: err.code });

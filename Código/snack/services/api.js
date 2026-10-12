@@ -238,3 +238,10 @@ export async function adminRemoveContent(type, id, reason = '') {
   const path = type === 'event' ? `/events/${encodeURIComponent(id)}` : `/posts/${encodeURIComponent(id)}`;
   return (await requestJson(path, { method: 'DELETE', body: JSON.stringify({ reason }) })).data;
 }
+
+// --- DENÚNCIAS ---
+export async function createReport(payload) { return (await requestJson('/reports', { method: 'POST', body: JSON.stringify(payload) })).data; }
+export async function adminListReports(status = 'open') { return (await requestJson(`/admin/reports${queryString({ status })}`)).data; }
+export async function adminGetReport(id) { return (await requestJson(`/admin/reports/${encodeURIComponent(id)}`)).data; }
+export async function adminStartReport(id) { return (await requestJson(`/admin/reports/${encodeURIComponent(id)}/start`, { method: 'POST', body: JSON.stringify({}) })).data; }
+export async function adminDecideReport(id, payload) { return (await requestJson(`/admin/reports/${encodeURIComponent(id)}/decide`, { method: 'POST', body: JSON.stringify(payload) })).data; }
