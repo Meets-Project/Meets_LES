@@ -1,0 +1,15 @@
+---
+title: Estado da Autenticação
+---
+stateDiagram-v2
+  direction TB
+  [*] --> Deslogado
+  Deslogado --> Autenticando : informar e-mail e senha
+  Autenticando --> Deslogado : inválidas ou conta desativada
+  Autenticando --> VerificandoEmail : e-mail ainda não verificado
+  VerificandoEmail : Verificando e-mail
+  VerificandoEmail --> Autenticado : código válido
+  Autenticando --> Autenticado : credenciais válidas
+  Autenticado --> Deslogado : sair
+  Autenticado --> Deslogado : sessão expirada (7 dias) ou conta desativada
+  Deslogado --> [*]

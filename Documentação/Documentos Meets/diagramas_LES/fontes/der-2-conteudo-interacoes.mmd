@@ -1,0 +1,114 @@
+---
+title: DER — Conteúdo e interações
+---
+erDiagram
+  users {
+    uuid id PK
+    varchar name
+    varchar email
+    varchar account_type
+    varchar status
+  }
+  posts {
+    uuid id PK
+    uuid author_id FK
+    text content
+    text image
+    int likes
+    timestamptz created_at
+    varchar type
+    varchar title
+    varchar presentation_id
+    uuid mentioned_event_id FK
+    date event_date
+    time event_time
+    time event_end_time
+    varchar visibility
+    text share_token
+  }
+  events {
+    uuid id PK
+    uuid author_id FK
+    varchar title
+    text description
+    timestamptz created_at
+    text image
+    date event_date
+    time event_time
+    time event_end_time
+    varchar location
+    varchar visibility
+    text share_token
+  }
+  post_likes {
+    uuid user_id PK,FK
+    uuid post_id PK,FK
+    timestamptz created_at
+  }
+  event_likes {
+    uuid user_id PK,FK
+    uuid event_id PK,FK
+    timestamptz created_at
+  }
+  post_comments {
+    uuid id PK
+    uuid post_id FK
+    uuid event_id FK
+    uuid user_id FK
+    text content
+    timestamptz created_at
+  }
+  favorites {
+    uuid user_id PK,FK
+    uuid post_id PK,FK
+    timestamptz created_at
+  }
+  saved_posts {
+    uuid user_id PK,FK
+    uuid post_id PK,FK
+    timestamptz created_at
+  }
+  saved_events {
+    uuid user_id PK,FK
+    uuid event_id PK,FK
+    timestamptz created_at
+  }
+  event_participants {
+    uuid event_id PK,FK
+    uuid user_id PK,FK
+    varchar status
+    timestamptz created_at
+  }
+  content_shares {
+    bigint id PK
+    uuid user_id FK
+    varchar content_type
+    uuid content_id
+    timestamptz created_at
+  }
+  content_audience {
+    varchar content_type PK
+    text content_id PK
+    uuid user_id PK,FK
+    timestamptz created_at
+  }
+  users ||--o{ posts : "author_id"
+  events |o--o{ posts : "mentioned_event_id"
+  users ||--o{ events : "author_id"
+  users ||--o{ post_likes : "user_id"
+  posts ||--o{ post_likes : "post_id"
+  users ||--o{ event_likes : "user_id"
+  events ||--o{ event_likes : "event_id"
+  posts |o--o{ post_comments : "post_id"
+  events |o--o{ post_comments : "event_id"
+  users ||--o{ post_comments : "user_id"
+  users ||--o{ favorites : "user_id"
+  posts ||--o{ favorites : "post_id"
+  users ||--o{ saved_posts : "user_id"
+  posts ||--o{ saved_posts : "post_id"
+  users ||--o{ saved_events : "user_id"
+  events ||--o{ saved_events : "event_id"
+  events ||--o{ event_participants : "event_id"
+  users ||--o{ event_participants : "user_id"
+  users |o--o{ content_shares : "user_id"
+  users ||--o{ content_audience : "user_id"

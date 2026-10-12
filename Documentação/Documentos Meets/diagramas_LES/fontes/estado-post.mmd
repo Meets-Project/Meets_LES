@@ -1,0 +1,16 @@
+---
+title: Estado do Post
+---
+stateDiagram-v2
+  direction TB
+  [*] --> Publicado : publicar (texto, imagem e visibilidade)
+  Publicado --> Editando : autor edita
+  Editando --> Publicado : salvar alterações
+  Publicado --> Oculto : conta do autor desativada
+  Oculto --> Publicado : conta reativada
+  Publicado --> Excluido : autor exclui
+  Publicado --> Removido : administrador remove (moderação)
+  Excluido : Excluído
+  Removido : Removido pela moderação
+  Excluido --> [*]
+  Removido --> [*]

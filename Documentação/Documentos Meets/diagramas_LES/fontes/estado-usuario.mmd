@@ -1,0 +1,24 @@
+---
+title: Estado do Usuário (conta)
+---
+stateDiagram-v2
+  direction TB
+  [*] --> AguardandoVerificacao : cadastrar
+  AguardandoVerificacao : Aguardando verificação
+  note left of AguardandoVerificacao
+    Pode reenviar o código;
+    ele expira em 30 minutos.
+  end note
+  AguardandoVerificacao --> Ativa : código válido
+  note right of Ativa
+    Pode editar o perfil
+    e alterar a senha.
+  end note
+  Ativa --> Desativada : desativar
+  Desativada --> Ativa : admin reativa
+  note right of Desativada
+    Desativada pelo próprio usuário
+    (com senha) ou por um admin.
+    A conta nunca é apagada.
+    Login bloqueado e conteúdo oculto.
+  end note

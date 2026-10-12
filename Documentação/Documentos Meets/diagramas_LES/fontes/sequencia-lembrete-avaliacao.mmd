@@ -1,0 +1,22 @@
+---
+title: Diagrama de sequência — Lembrar Avaliação Pendente (#015, automação)
+---
+sequenceDiagram
+  participant G@{ "type": "control" } as Agendador (server.js)
+  participant D@{ "type": "database" } as PostgreSQL
+  participant C@{ "type": "control" } as API GET /notifications
+  participant T@{ "type": "boundary" } as Notificações (app)
+  actor P as Participante
+  loop a cada 60 segundos
+    G->>D: busca eventos e apresentações que terminaram (horário de Brasília)
+    G->>D: cria o lembrete para cada participante ainda sem lembrete
+    Note over G,D: ignora quem desligou as notificações
+  end
+  P->>T: abre as notificações
+  T->>C: GET /notifications
+  C->>D: confere lembretes pendentes e lista as notificações
+  D-->>C: notificações
+  C-->>T: lista
+  T-->>P: "Avalie o evento que você participou"
+  P->>T: toca no lembrete
+  T-->>P: abre a tela de avaliação do evento ou da apresentação
