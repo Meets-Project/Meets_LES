@@ -91,9 +91,9 @@ export default function AppNavigation() {
   }, []);
 
   const getTitleForRoute = (routeName) => {
-    if (routeName === 'MainTabs') return 'Resenha';
+    if (routeName === 'MainTabs') return 'Meets';
     const tabTitles = {
-      home: 'Resenha',
+      home: 'Meets',
       search: 'Buscar',
       create: 'Criar',
       chat: 'Chat',

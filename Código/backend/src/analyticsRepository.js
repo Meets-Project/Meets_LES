@@ -1,6 +1,5 @@
 import { rankSpeakers, summarizeSpeakerRatings } from './services/scoring.js';
-
-export const APP_TIMEZONE = process.env.APP_TIMEZONE || 'America/Sao_Paulo';
+import { APP_TIMEZONE } from './services/clock.js';
 
 // Consultas de análise: Ranking de Apresentadores (#007) e Dashboards (#008).
 export function makeAnalyticsRepository(db) {

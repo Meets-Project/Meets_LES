@@ -2,8 +2,13 @@ import "dotenv/config";
 import { app } from "./app.js";
 import { pool } from "./db.js";
 import { runMigrations } from "./migrations.js";
+import { APP_TIMEZONE } from "./services/clock.js";
 
 const port = Number(process.env.PORT || 3333);
+
+if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
+  console.warn("ATENÇÃO: JWT_SECRET não definido. Os tokens estão usando uma chave de desenvolvimento; defina JWT_SECRET no ambiente.");
+}
 
 async function checkDatabase() {
   await pool.query("SELECT 1");
@@ -45,10 +50,10 @@ async function notifyFinished() {
           e.event_date IS NOT NULL
           AND e.event_end_time IS NOT NULL
           AND (
-            e.event_date < CURRENT_DATE
+            e.event_date < (NOW() AT TIME ZONE $1)::date
             OR (
-              e.event_date = CURRENT_DATE
-              AND e.event_end_time <= CURRENT_TIME
+              e.event_date = (NOW() AT TIME ZONE $1)::date
+              AND e.event_end_time <= (NOW() AT TIME ZONE $1)::time
             )
           )
 
@@ -74,10 +79,10 @@ async function notifyFinished() {
           AND p.event_date IS NOT NULL
           AND p.event_end_time IS NOT NULL
           AND (
-            p.event_date < CURRENT_DATE
+            p.event_date < (NOW() AT TIME ZONE $1)::date
             OR (
-              p.event_date = CURRENT_DATE
-              AND p.event_end_time <= CURRENT_TIME
+              p.event_date = (NOW() AT TIME ZONE $1)::date
+              AND p.event_end_time <= (NOW() AT TIME ZONE $1)::time
             )
           )
       ) target
@@ -102,7 +107,7 @@ async function notifyFinished() {
         target_type IS NOT NULL
         AND target_id IS NOT NULL
       DO NOTHING
-    `);
+    `, [APP_TIMEZONE]);
 
     console.log("Notificações de avaliações verificadas.");
   } catch (error) {

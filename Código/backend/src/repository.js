@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { summarizeSpeakerRatings } from './services/scoring.js';
+import { hasEnded } from './services/clock.js';
 export function makeRepository(db) {
   const one = async (sql, params = []) => (await db.query(sql, params)).rows[0] || null;
   const many = async (sql, params = []) => (await db.query(sql, params)).rows;
@@ -82,15 +83,6 @@ export function makeRepository(db) {
     }
   };
 
-  const hasEnded = (dateValue, timeValue) => {
-    if (!dateValue || !timeValue) return false;
-    const date = dateValue instanceof Date ? dateValue.toISOString().slice(0, 10) : String(dateValue).slice(0, 10);
-    const time = String(timeValue).slice(0, 5);
-    const now = new Date();
-    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const current = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    return `${date} ${time}` <= `${today} ${current}`;
-  };
 
   const canView = async (contentType, contentId, viewerId = null, shareToken = null) => {
     const table = contentType === 'event' ? 'events' : 'posts';

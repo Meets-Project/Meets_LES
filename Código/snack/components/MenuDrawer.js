@@ -6,6 +6,7 @@ import { colors } from '../styles/colors';
 import { menuItems } from '../data/menuItens'
 import { useNavigation } from '@react-navigation/native';
 import { getCurrentUser, isAdmin } from '../services/session';
+import { clearToken } from '../services/api';
 import { AvatarImage } from './AvatarImage';
 
 export function MenuDrawer({ isOpen, onClose, onSelectItem }) {
@@ -151,7 +152,12 @@ export function MenuDrawer({ isOpen, onClose, onSelectItem }) {
         <View style={menuDrawerStyles.footer}>
           <TouchableOpacity
             style={menuDrawerStyles.logoutButton}
-            onPress={() => navigation.navigate('Login')}
+            onPress={async () => {
+              // Sair de verdade: apaga o token salvo e volta para o login.
+              await clearToken();
+              onClose();
+              navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+            }}
           >
             <MaterialCommunityIcons name="logout" size={20} color="#ffffff" />
             <Text style={menuDrawerStyles.logoutText}>Sair</Text>

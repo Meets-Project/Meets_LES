@@ -13,6 +13,7 @@ import { registerAdminRoutes } from './routes/adminRoutes.js';
 import { makeReportsRepository } from './reportsRepository.js';
 import { registerReportRoutes } from './routes/reportRoutes.js';
 import { makeAnalyticsRepository } from './analyticsRepository.js';
+import { nowParts } from './services/clock.js';
 import { DEACTIVATED_MESSAGE, makeAuth, signToken } from './auth.js';
 
 function verificationToken() {
@@ -38,6 +39,10 @@ function mailTransport() {
     ...(hasAuth ? { auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } } : {}),
   });
 }
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 async function sendVerificationMail(email, name, token) {
   const transport = mailTransport();
   if (!transport) {
@@ -52,7 +57,7 @@ async function sendVerificationMail(email, name, token) {
     to: email,
     subject: 'Confirme seu e-mail no Meets',
     text: `Olá, ${name}! Seu código de verificação do Meets é: ${token}. Ele expira em ${minutes} minutos.`,
-    html: `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto"><h2>Confirme seu e-mail no Meets</h2><p>Olá, ${name}!</p><p>Use este código para confirmar seu e-mail:</p><div style="font-size:30px;font-weight:800;letter-spacing:6px;padding:16px;background:#f4f4f4;border-radius:10px;text-align:center">${token}</div><p>O código expira em ${minutes} minutos.</p></div>`,
+    html: `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto"><h2>Confirme seu e-mail no Meets</h2><p>Olá, ${escapeHtml(name)}!</p><p>Use este código para confirmar seu e-mail:</p><div style="font-size:30px;font-weight:800;letter-spacing:6px;padding:16px;background:#f4f4f4;border-radius:10px;text-align:center">${token}</div><p>O código expira em ${minutes} minutos.</p></div>`,
   });
 }
 
@@ -119,10 +124,9 @@ function validateEventSchedule(data, { required = false } = {}) {
   if (!data.eventDate && !data.eventTime && !data.eventEndTime) return;
   const dateParts = String(data.eventDate || '').split('-').map(Number);
   const date = new Date(`${data.eventDate}T00:00:00`);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
   const validCalendarDate = dateParts.length === 3 && date.getFullYear() === dateParts[0] && date.getMonth() + 1 === dateParts[1] && date.getDate() === dateParts[2];
-  if (!validCalendarDate || date < today) {
+  // "Hoje" no fuso do Meets, não no do servidor.
+  if (!validCalendarDate || String(data.eventDate) < nowParts().date) {
     const error = new Error('A data do evento não pode ser anterior a hoje.');
     error.code = 'INVALID_SCHEDULE';
     throw error;
