@@ -12,6 +12,7 @@ import { makeModeration, ModerationError } from './services/moderation.js';
 import { registerAdminRoutes } from './routes/adminRoutes.js';
 import { makeReportsRepository } from './reportsRepository.js';
 import { registerReportRoutes } from './routes/reportRoutes.js';
+import { makeAnalyticsRepository } from './analyticsRepository.js';
 import { DEACTIVATED_MESSAGE, makeAuth, signToken } from './auth.js';
 
 function verificationToken() {
@@ -149,6 +150,7 @@ export function createApp({ query = defaultQuery } = {}) {
   const repo = makeRepository(db);
   const adminRepo = makeAdminRepository(db);
   const reportsRepo = makeReportsRepository(db);
+  const analyticsRepo = makeAnalyticsRepository(db);
   const moderation = makeModeration({ repo, adminRepo });
   const { requireAuth, optionalAuth } = makeAuth(db);
 
@@ -734,6 +736,15 @@ export function createApp({ query = defaultQuery } = {}) {
         comment: z.string().max(1000).optional(),
       }).parse(req.body);
       res.status(201).json({ data: await repo.createEventRating(req.auth.sub, data) });
+    } catch (e) { next(e); }
+  });
+
+  // #007 Visualizar Ranking de Apresentadores.
+  app.get('/ranking', requireAuth, async (req, res, next) => {
+    try {
+      const days = Number(req.query.days || 0);
+      const since = Number.isFinite(days) && days > 0 ? new Date(Date.now() - days * 86400000) : null;
+      res.json({ data: await analyticsRepo.ranking({ since }) });
     } catch (e) { next(e); }
   });
 

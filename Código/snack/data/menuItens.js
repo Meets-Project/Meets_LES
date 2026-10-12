@@ -3,6 +3,7 @@ export const menuItems = [
   { id: 'favorites', label: 'Favoritos', icon: 'heart' },
   { id: 'history', label: 'Histórico', icon: 'history' },
   { id: 'saves', label: 'Salvos', icon: 'bookmark' },
+  { id: 'Ranking', label: 'Ranking de apresentadores', icon: 'trophy-outline' },
   { id: 'settings', label: 'Configurações', icon: 'cog' },
   { id: 'help', label: 'Ajuda', icon: 'help-circle' },
   { id: 'about', label: 'Sobre', icon: 'information' },

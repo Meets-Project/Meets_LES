@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { summarizeSpeakerRatings } from './services/scoring.js';
 export function makeRepository(db) {
   const one = async (sql, params = []) => (await db.query(sql, params)).rows[0] || null;
   const many = async (sql, params = []) => (await db.query(sql, params)).rows;
@@ -1327,36 +1328,8 @@ export function makeRepository(db) {
     },
 
     async getSpeakerRatingSummary(speakerId) {
-      const allRatings = await many(`SELECT stars, skills, comment, created_at, post_id, rater_id
-        FROM presentation_ratings WHERE speaker_id=$1 ORDER BY created_at DESC`, [speakerId]);
-
-      const totalRatings = allRatings.length;
-      let averageStars = 0;
-      const skillsSum = { clarity: 0, content: 0, engagement: 0, storytelling: 0, timing: 0, visuals: 0 };
-      let skillsCount = 0;
-
-      if (totalRatings > 0) {
-        const starSum = allRatings.reduce((acc, r) => acc + Number(r.stars || 0), 0);
-        averageStars = Number((starSum / totalRatings).toFixed(1));
-
-        allRatings.forEach((r) => {
-          const s = typeof r.skills === 'string' ? JSON.parse(r.skills || '{}') : (r.skills || {});
-          if (s && Object.keys(s).length > 0) {
-            skillsCount++;
-            ['clarity', 'content', 'engagement', 'storytelling', 'timing', 'visuals'].forEach((k) => {
-              skillsSum[k] += Number(s[k] || 0);
-            });
-          }
-        });
-      }
-
-      const averageSkills = {};
-      ['clarity', 'content', 'engagement', 'storytelling', 'timing', 'visuals'].forEach((k) => {
-        averageSkills[k] = skillsCount > 0 ? Math.round(skillsSum[k] / skillsCount) : 0;
-      });
-
-      const values = Object.values(averageSkills);
-      const overall = values.length ? Math.round(values.reduce((a, b) => a + b, 0) / values.length) : 0;
+      const allRatings = await many(`SELECT stars, skills FROM presentation_ratings WHERE speaker_id=$1`, [speakerId]);
+      const { totalRatings, averageStars, averageSkills, overall } = summarizeSpeakerRatings(allRatings);
 
       const recent = await many(`SELECT pr.id, pr.stars, pr.comment, pr.visibility, pr.created_at,
         p.title AS presentation_title, CASE WHEN pr.visibility='anonymous' THEN 'Anônimo' ELSE u.name END AS rater_name

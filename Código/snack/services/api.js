@@ -250,3 +250,6 @@ export async function adminDecideReport(id, payload) { return (await requestJson
 export async function registerShare(contentType, contentId) {
   return (await requestJson('/shares', { method: 'POST', body: JSON.stringify({ contentType, contentId }) })).data;
 }
+
+// --- RANKING E DASHBOARDS ---
+export async function getRanking(days = 0) { return (await requestJson(`/ranking${days ? `?days=${days}` : ''}`)).data; }
