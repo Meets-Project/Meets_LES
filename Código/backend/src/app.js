@@ -7,7 +7,7 @@ import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { query as defaultQuery } from './db.js';
 import { makeRepository } from './repository.js';
-import { makeAuth, signToken } from './auth.js';
+import { DEACTIVATED_MESSAGE, makeAuth, requireAdmin, signToken } from './auth.js';
 
 function verificationToken() {
   return crypto.randomBytes(32).toString('hex');
@@ -200,6 +200,9 @@ export function createApp({ query = defaultQuery } = {}) {
       if (!user || !(await bcrypt.compare(data.password, user.password_hash))) {
         return res.status(401).json({ message: 'E-mail ou senha inválidos.' });
       }
+      if (user.status !== 'active') {
+        return res.status(403).json({ message: DEACTIVATED_MESSAGE, code: 'ACCOUNT_DEACTIVATED' });
+      }
       const safe = await repo.getUser(user.id);
       res.json({ data: { token: signToken(user), user: safe } });
     } catch (e) { next(e); }
@@ -259,10 +262,50 @@ export function createApp({ query = defaultQuery } = {}) {
     catch (e) { next(e); }
   });
 
+  // Troca de senha: confere a senha atual antes de gravar a nova.
+  app.put('/users/me/password', requireAuth, async (req, res, next) => {
+    try {
+      const data = z.object({
+        currentPassword: z.string().min(1).max(128),
+        newPassword: z.string().min(6).max(128),
+      }).parse(req.body);
+      const hash = await repo.getPasswordHash(req.auth.sub);
+      if (!hash || !(await bcrypt.compare(data.currentPassword, hash))) {
+        return res.status(400).json({ message: 'Senha atual incorreta.', code: 'WRONG_PASSWORD' });
+      }
+      if (data.currentPassword === data.newPassword) {
+        return res.status(400).json({ message: 'A nova senha deve ser diferente da atual.' });
+      }
+      await repo.setPasswordHash(req.auth.sub, await bcrypt.hash(data.newPassword, 12));
+      await repo.addHistory(req.auth.sub, { type: 'password_changed', title: 'Alterou a senha', subtitle: '' });
+      res.json({ data: { changed: true } });
+    } catch (e) { next(e); }
+  });
+
+  // "Excluir perfil": a conta é desativada (não apagada). Só um administrador reativa.
+  app.post('/users/me/deactivate', requireAuth, async (req, res, next) => {
+    try {
+      const data = z.object({
+        password: z.string().min(1).max(128),
+        reason: z.string().trim().max(255).optional(),
+      }).parse(req.body);
+      const hash = await repo.getPasswordHash(req.auth.sub);
+      if (!hash || !(await bcrypt.compare(data.password, hash))) {
+        return res.status(400).json({ message: 'Senha incorreta.', code: 'WRONG_PASSWORD' });
+      }
+      if (req.auth.isAdmin && (await repo.countActiveAdmins()) <= 1) {
+        return res.status(400).json({ message: 'Você é o único administrador ativo. Promova outro administrador antes de desativar sua conta.' });
+      }
+      await repo.addHistory(req.auth.sub, { type: 'account_deactivated', title: 'Desativou a própria conta', subtitle: data.reason || '' });
+      const result = await repo.deactivateUser(req.auth.sub, { by: req.auth.sub, reason: data.reason || 'Desativada pelo próprio usuário' });
+      res.json({ data: result });
+    } catch (e) { next(e); }
+  });
+
   app.get('/users/:id/public', requireAuth, async (req, res, next) => {
     try {
       const user = await repo.getPublicUser(req.params.id);
-      if (!user) return res.status(404).json({ message: 'Perfil não encontrado.' });
+      if (!user || (user.status !== 'active' && !req.auth.isAdmin)) return res.status(404).json({ message: 'Perfil não encontrado.' });
       res.json({ data: user });
     } catch (e) { next(e); }
   });

@@ -4,11 +4,11 @@ export function makeRepository(db) {
   const many = async (sql, params = []) => (await db.query(sql, params)).rows;
 
   // Campos de usuário + perfil devolvidos pela API (mesmo formato de antes da separação).
-  const USER_COLUMNS = `u.id,u.name,u.email,u.email_verified,u.created_at,u.updated_at,
+  const USER_COLUMNS = `u.id,u.name,u.email,u.email_verified,u.account_type,u.status,u.created_at,u.updated_at,
     COALESCE(up.role,'Membro') AS role, COALESCE(up.city,'') AS city,
     COALESCE(up.address_number,'') AS address_number, COALESCE(up.avatar,'👤') AS avatar,
     COALESCE(up.bio,'') AS bio`;
-  const PUBLIC_USER_COLUMNS = `u.id,u.name,u.created_at,
+  const PUBLIC_USER_COLUMNS = `u.id,u.name,u.status,u.created_at,
     COALESCE(up.role,'Membro') AS role, COALESCE(up.city,'') AS city,
     COALESCE(up.avatar,'👤') AS avatar, COALESCE(up.bio,'') AS bio`;
 
@@ -84,8 +84,10 @@ export function makeRepository(db) {
 
   const canView = async (contentType, contentId, viewerId = null, shareToken = null) => {
     const table = contentType === 'event' ? 'events' : 'posts';
-    const row = await one(`SELECT id,author_id,visibility,share_token FROM ${table} WHERE id=$1`, [contentId]);
+    const row = await one(`SELECT t.id,t.author_id,t.visibility,t.share_token,u.status AS author_status
+      FROM ${table} t JOIN users u ON u.id = t.author_id WHERE t.id=$1`, [contentId]);
     if (!row) return false;
+    if (row.author_status !== 'active') return false; // conteúdo de conta desativada fica oculto
     if (viewerId && row.author_id === viewerId) return true;
     if (row.visibility === 'public') return true;
     if (row.visibility === 'link') return Boolean(shareToken && row.share_token && shareToken === row.share_token);
@@ -146,16 +148,48 @@ export function makeRepository(db) {
       return one(`SELECT ${USER_COLUMNS} FROM users u LEFT JOIN profiles up ON up.user_id = u.id WHERE u.id=$1`, [id]);
     },
 
+    // --- CONTA: senha e situação (ativa/desativada) ---
+    async getAccount(id) {
+      return one(`SELECT id,email,name,account_type,status,deactivated_at,deactivated_by,deactivation_reason
+        FROM users WHERE id=$1`, [id]);
+    },
+
+    async getPasswordHash(id) {
+      return (await one(`SELECT password_hash FROM users WHERE id=$1`, [id]))?.password_hash || null;
+    },
+
+    async setPasswordHash(id, passwordHash) {
+      return one(`UPDATE users SET password_hash=$2, updated_at=NOW() WHERE id=$1 RETURNING id`, [id, passwordHash]);
+    },
+
+    // A conta nunca é apagada: fica desativada, o login é bloqueado e o conteúdo some do app.
+    async deactivateUser(id, { by = null, reason = '' } = {}) {
+      return one(`UPDATE users SET status='deactivated', deactivated_at=NOW(), deactivated_by=$2,
+          deactivation_reason=$3, updated_at=NOW()
+        WHERE id=$1 RETURNING id,status,deactivated_at,deactivated_by,deactivation_reason`,
+        [id, by, String(reason || '').slice(0, 255)]);
+    },
+
+    async countActiveAdmins() {
+      return Number((await one(`SELECT count(*)::int AS total FROM users WHERE account_type='admin' AND status='active'`))?.total || 0);
+    },
+
+    async reactivateUser(id) {
+      return one(`UPDATE users SET status='active', deactivated_at=NULL, deactivated_by=NULL,
+          deactivation_reason='', updated_at=NOW()
+        WHERE id=$1 RETURNING id,status`, [id]);
+    },
+
     async search(term, userId = null) {
       const q = `%${term}%`;
       const [users, posts] = await Promise.all([
         many(`SELECT 'user'::varchar AS type,u.id,u.name AS title,up.role AS subtitle,up.avatar
           FROM users u LEFT JOIN profiles up ON up.user_id = u.id
-          WHERE u.name ILIKE $1 OR up.role ILIKE $1 ORDER BY u.name LIMIT 50`, [q]),
+          WHERE u.status = 'active' AND (u.name ILIKE $1 OR up.role ILIKE $1) ORDER BY u.name LIMIT 50`, [q]),
         many(`SELECT 'post'::varchar AS type,p.id,p.content AS title,u.name AS subtitle,up.avatar,
             p.author_id,p.visibility
           FROM posts p JOIN users u ON u.id=p.author_id LEFT JOIN profiles up ON up.user_id = u.id
-          WHERE p.content ILIKE $1 ORDER BY p.created_at DESC LIMIT 100`, [q]),
+          WHERE u.status = 'active' AND p.content ILIKE $1 ORDER BY p.created_at DESC LIMIT 100`, [q]),
       ]);
       const connected = new Set((await many(`SELECT connected_user_id FROM user_connections WHERE user_id=$1`, [userId])).map(r => r.connected_user_id));
       const selected = new Set((await many(`SELECT content_id FROM content_audience WHERE content_type='post' AND user_id=$1`, [userId])).map(r => String(r.content_id)));
@@ -304,7 +338,7 @@ export function makeRepository(db) {
           u.id AS user_id, u.name AS user_name, up.avatar AS user_avatar, up.role AS user_role
         FROM post_comments c
         JOIN users u ON u.id = c.user_id LEFT JOIN profiles up ON up.user_id = u.id
-        WHERE c.post_id = $1 OR c.event_id = $1
+        WHERE (c.post_id = $1 OR c.event_id = $1) AND u.status = 'active'
         ORDER BY c.created_at ASC
         LIMIT 200
       `, [targetId]);
@@ -355,6 +389,7 @@ export function makeRepository(db) {
         JOIN users u ON u.id=p.author_id LEFT JOIN profiles up ON up.user_id = u.id
         LEFT JOIN (SELECT post_id, count(*)::int AS comments_count FROM post_comments GROUP BY post_id) c ON c.post_id=p.id
         LEFT JOIN events e ON e.id=p.mentioned_event_id
+        WHERE u.status = 'active'
         ORDER BY p.created_at DESC LIMIT $1`, [limit]);
 
       return rows.map((p) => ({
@@ -418,6 +453,7 @@ export function makeRepository(db) {
         JOIN users u ON u.id=p.author_id LEFT JOIN profiles up ON up.user_id = u.id
         LEFT JOIN (SELECT post_id, count(*)::int AS comments_count FROM post_comments GROUP BY post_id) c ON c.post_id=p.id
         LEFT JOIN events e ON e.id=p.mentioned_event_id
+        WHERE u.status = 'active'
         ORDER BY p.created_at DESC LIMIT $1`, [limit]);
 
       let formattedPosts = posts.map((p) => ({
@@ -487,6 +523,7 @@ export function makeRepository(db) {
         FROM events e JOIN users u ON u.id=e.author_id LEFT JOIN profiles up ON up.user_id = u.id
         LEFT JOIN (SELECT event_id, count(*)::int AS comments_count FROM post_comments GROUP BY event_id) c ON c.event_id=e.id
         LEFT JOIN (SELECT event_id, count(*)::int AS likes_count FROM event_likes GROUP BY event_id) l ON l.event_id=e.id
+        WHERE u.status = 'active'
         ORDER BY e.created_at DESC LIMIT $1`, [limit]),
         many(`SELECT event_id, count(*)::int AS count FROM event_participants GROUP BY event_id`),
       ]);
@@ -1105,7 +1142,7 @@ export function makeRepository(db) {
         SELECT u.id, u.name, up.avatar, up.role, up.city, uc.created_at AS connected_at
         FROM user_connections uc
         JOIN users u ON u.id = uc.connected_user_id LEFT JOIN profiles up ON up.user_id = u.id
-        WHERE uc.user_id = $1
+        WHERE uc.user_id = $1 AND u.status = 'active'
         ORDER BY uc.created_at DESC
       `, [userId]);
     },
@@ -1115,7 +1152,7 @@ export function makeRepository(db) {
         SELECT u.id, u.name, up.avatar, up.role, up.city, uc.created_at AS followed_at
         FROM user_connections uc
         JOIN users u ON u.id = uc.user_id LEFT JOIN profiles up ON up.user_id = u.id
-        WHERE uc.connected_user_id = $1
+        WHERE uc.connected_user_id = $1 AND u.status = 'active'
         ORDER BY uc.created_at DESC
       `, [userId]);
     },

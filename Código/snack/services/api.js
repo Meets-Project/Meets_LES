@@ -78,6 +78,12 @@ export async function verifyEmail(token) {
 
 export async function getMe() { return (await requestJson('/users/me')).data; }
 export async function getPublicUser(userId) { return (await requestJson(`/users/${encodeURIComponent(userId)}/public`)).data; }
+export async function changePassword(currentPassword, newPassword) {
+  return (await requestJson('/users/me/password', { method: 'PUT', body: JSON.stringify({ currentPassword, newPassword }) })).data;
+}
+export async function deactivateMyAccount(password, reason = '') {
+  return (await requestJson('/users/me/deactivate', { method: 'POST', body: JSON.stringify({ password, reason }) })).data;
+}
 export async function updateMe(payload) { return (await requestJson('/users/me', { method: 'PUT', body: JSON.stringify(payload) })).data; }
 export async function search(q) { return (await requestJson(`/search?q=${encodeURIComponent(q)}`)).data; }
 

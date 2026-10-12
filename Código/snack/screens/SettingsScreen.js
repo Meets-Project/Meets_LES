@@ -13,7 +13,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { colors } from '../styles/colors';
 import { screenStyles } from '../styles/screenStyles';
-import { clearToken, getMe, getSettings, updateSettings } from '../services/api';
+import { changePassword, clearToken, deactivateMyAccount, getMe, getSettings, updateSettings } from '../services/api';
+import { confirmAction } from '../utils/confirm';
 import { FormInput } from '../components/FormInput';
 import { validatePassword, validatePasswordMatch } from '../utils/masks';
 import { useTheme } from '../context/ThemeContext';
@@ -41,6 +42,12 @@ export function SettingsScreen() {
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  // Desativar conta ("Excluir perfil"): a conta é desativada e só um administrador reativa.
+  const [showDeactivate, setShowDeactivate] = useState(false);
+  const [deactivatePassword, setDeactivatePassword] = useState('');
+  const [deactivateError, setDeactivateError] = useState('');
+  const [isDeactivating, setIsDeactivating] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -117,8 +124,7 @@ export function SettingsScreen() {
 
     setIsChangingPassword(true);
     try {
-      // Simulação / Feedback de sucesso para alteração de senha
-      await new Promise((res) => setTimeout(res, 800));
+      await changePassword(currentPassword, newPassword);
       setPasswordSuccess('Senha alterada com sucesso!');
       setCurrentPassword('');
       setNewPassword('');
@@ -128,6 +134,30 @@ export function SettingsScreen() {
       setPasswordError(e.message || 'Erro ao alterar a senha.');
     } finally {
       setIsChangingPassword(false);
+    }
+  }
+
+  async function handleDeactivateAccount() {
+    setDeactivateError('');
+    if (!deactivatePassword) {
+      setDeactivateError('Informe sua senha para confirmar.');
+      return;
+    }
+    const ok = await confirmAction(
+      'Desativar conta',
+      'Sua conta e seu conteúdo deixarão de aparecer no Meets e você não conseguirá mais entrar. Só um administrador pode reativá-la. Deseja continuar?',
+      'Desativar'
+    );
+    if (!ok) return;
+    setIsDeactivating(true);
+    try {
+      await deactivateMyAccount(deactivatePassword);
+      await clearToken();
+      navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+    } catch (e) {
+      setDeactivateError(e.message || 'Não foi possível desativar a conta.');
+    } finally {
+      setIsDeactivating(false);
     }
   }
 
@@ -340,6 +370,67 @@ export function SettingsScreen() {
             Sua conta está protegida. Altere sua senha periodicamente para manter seus dados seguros.
           </Text>
         )}
+      </View>
+
+      {/* Seção: Desativar conta */}
+      <View style={[screenStyles.sectionCard, { marginTop: 14 }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <MaterialCommunityIcons name="account-off-outline" size={22} color="#d93025" />
+            <Text style={screenStyles.sectionTitle}>Desativar Conta</Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => {
+              setShowDeactivate((prev) => !prev);
+              setDeactivateError('');
+              setDeactivatePassword('');
+            }}
+            style={styles.toggleBtn}
+          >
+            <Text style={styles.toggleBtnText}>{showDeactivate ? 'Fechar' : 'Desativar'}</Text>
+            <MaterialCommunityIcons name={showDeactivate ? 'chevron-up' : 'chevron-down'} size={18} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
+
+        <Text style={[screenStyles.sectionText, { marginTop: 6 }]}>
+          Sua conta e seu conteúdo deixam de aparecer no Meets. Os dados não são apagados e só um administrador pode reativar a conta.
+        </Text>
+
+        {showDeactivate ? (
+          <View style={{ marginTop: 14 }}>
+            <FormInput
+              label="Confirme sua senha"
+              value={deactivatePassword}
+              onChangeText={setDeactivatePassword}
+              placeholder="Sua senha atual"
+              secureTextEntry
+              leftIcon="lock-outline"
+            />
+
+            {deactivateError ? (
+              <View style={styles.alertBoxError}>
+                <MaterialCommunityIcons name="alert-circle" size={18} color="#d93025" />
+                <Text style={styles.alertTextError}>{deactivateError}</Text>
+              </View>
+            ) : null}
+
+            <TouchableOpacity
+              style={[styles.logoutButton, isDeactivating && { opacity: 0.7 }]}
+              onPress={handleDeactivateAccount}
+              disabled={isDeactivating}
+              accessibilityLabel="Desativar minha conta"
+            >
+              {isDeactivating ? (
+                <ActivityIndicator color="#d93025" />
+              ) : (
+                <>
+                  <MaterialCommunityIcons name="account-off-outline" size={20} color="#d93025" />
+                  <Text style={styles.logoutButtonText}>Desativar minha conta</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        ) : null}
       </View>
 
       {/* Seção: Privacidade */}
