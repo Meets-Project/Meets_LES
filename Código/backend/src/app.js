@@ -720,7 +720,7 @@ export function createApp({ query = defaultQuery } = {}) {
           visuals: z.coerce.number().min(0).max(99),
         }),
         comment: z.string().max(1000).optional(),
-      }).refine(v => v.postId || v.presentationId, { message: 'Apresentação não informada.' });
+      }).refine(v => v.postId || v.presentationId, { message: 'Apresentação não informada.' }).parse(req.body);
 
       const rating = await repo.createRating(req.auth.sub, data);
       res.status(201).json({ data: rating });

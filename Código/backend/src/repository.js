@@ -63,7 +63,8 @@ export function makeRepository(db) {
       error.code = 'AUDIENCE_REQUIRED';
       throw error;
     }
-    const followers = await many(`SELECT connected_user_id AS id FROM user_connections WHERE user_id=$2 AND connected_user_id = ANY($1)`, [ids, authorId]);
+    // Seguidores do autor = quem segue o autor (user_id segue connected_user_id).
+    const followers = await many(`SELECT user_id AS id FROM user_connections WHERE connected_user_id=$2 AND user_id = ANY($1)`, [ids, authorId]);
     const allowed = new Set((followers || []).map((r) => r.id));
     if (!allowed.size) {
       const error = new Error('Os destinatários escolhidos precisam seguir você.');
@@ -1218,15 +1219,20 @@ export function makeRepository(db) {
         });
       }
 
-      const events = await many(`
+      const eventRows = await many(`
         SELECT e.id AS post_id, ('presentation-event-' || e.id) AS presentation_id, e.title, e.description AS content, e.created_at,
+          e.event_date, e.event_end_time,
           u.id AS author_id, u.name AS author_name, up.avatar AS author_avatar,
           'event' AS type
         FROM events e
+        JOIN event_participants ep ON ep.event_id = e.id AND ep.user_id = $1
         JOIN users u ON u.id=e.author_id LEFT JOIN profiles up ON up.user_id = u.id
+        WHERE e.author_id <> $1 AND u.status = 'active'
         ORDER BY e.created_at DESC
-        LIMIT 50
-      `);
+        LIMIT 100
+      `, [userId]);
+      // Só eventos dos quais a pessoa participou e que já terminaram.
+      const events = eventRows.filter((e) => hasEnded(e.event_date, e.event_end_time)).slice(0, 50);
 
       const formattedEvents = events.map((e) => ({
         postId: e.post_id,
@@ -1242,37 +1248,41 @@ export function makeRepository(db) {
 
     // --- RATINGS WITH AUTO SPEAKER & PRESENTATION RESOLUTION ---
     async createRating(raterId, payload) {
-      let post = payload.postId ? await one(`SELECT id,author_id,type,presentation_id,title,event_date,event_end_time FROM posts WHERE id=$1`, [payload.postId]) : null;
-      let presentationId = payload.presentationId || post?.presentation_id;
-
-      // If post exists without presentation_id, auto-link it
-      if (post && !presentationId) {
-        presentationId = `presentation-${post.id}`;
-        await db.query(`UPDATE posts SET presentation_id=$1, type='presentation' WHERE id=$2`, [presentationId, post.id]);
-        await db.query(`INSERT INTO presentation_speakers(presentation_id, speaker_id) VALUES($1, $2) ON CONFLICT DO NOTHING`, [presentationId, post.author_id]);
+      const forbidden = (message, code = 'FORBIDDEN') => { const err = new Error(message); err.code = code; return err; };
+      const POST_COLS = `id,author_id,type,presentation_id,title,event_date,event_end_time,mentioned_event_id`;
+      let post = payload.postId ? await one(`SELECT ${POST_COLS} FROM posts WHERE id=$1`, [payload.postId]) : null;
+      if (!post && payload.presentationId && !payload.presentationId.startsWith('presentation-event-')) {
+        post = await one(`SELECT ${POST_COLS} FROM posts WHERE presentation_id=$1 ORDER BY created_at ASC LIMIT 1`, [payload.presentationId]);
       }
-
-      // If presentationId was provided as an event presentation ID (e.g. presentation-event-<id>), link the event author
-      if (presentationId && presentationId.startsWith('presentation-event-')) {
-        const eventId = presentationId.replace('presentation-event-', '');
-        const ev = await one(`SELECT id, author_id FROM events WHERE id=$1`, [eventId]);
-        if (ev) {
-          await db.query(`INSERT INTO presentation_speakers(presentation_id, speaker_id) VALUES($1, $2) ON CONFLICT DO NOTHING`, [presentationId, ev.author_id]);
-        }
+      // Só apresentações podem ser avaliadas; uma publicação comum não vira apresentação ao ser avaliada.
+      if (post && post.type !== 'presentation' && !post.presentation_id) {
+        throw forbidden('Esta publicação não é uma apresentação.', 'PRESENTATION_REQUIRED');
       }
+      const presentationId = post ? post.presentation_id : payload.presentationId;
+      if (!presentationId) throw forbidden('Apresentação não informada.', 'PRESENTATION_REQUIRED');
 
-      if (post && (post.type === 'presentation' || post.presentation_id)) {
+      if (post) {
+        if (!(await canView('post', post.id, raterId))) throw forbidden('Você não tem acesso a esta apresentação.');
         if (!post.event_date || !post.event_end_time || !hasEnded(post.event_date, post.event_end_time)) {
-          const err = new Error('A apresentação ainda não terminou. A avaliação será liberada após o horário de fim.');
-          err.code = 'FORBIDDEN';
-          throw err;
+          throw forbidden('A apresentação ainda não terminou. A avaliação será liberada após o horário de fim.');
         }
-      }
-
-      if (!presentationId) {
-        const err = new Error('Apresentação não informada.');
-        err.code = 'PRESENTATION_REQUIRED';
-        throw err;
+        const isSpeaker = await one(`SELECT 1 FROM presentation_speakers WHERE presentation_id=$1 AND speaker_id=$2`, [presentationId, raterId]);
+        if (post.mentioned_event_id && !isSpeaker && post.author_id !== raterId) {
+          const participant = await one(`SELECT 1 FROM event_participants WHERE event_id=$1 AND user_id=$2`, [post.mentioned_event_id, raterId]);
+          if (!participant) throw forbidden('Só quem participou do evento pode avaliar esta apresentação.');
+        }
+      } else if (presentationId.startsWith('presentation-event-')) {
+        // Avaliação do organizador como apresentador do próprio evento: mesmas regras da avaliação de evento.
+        const eventId = presentationId.replace('presentation-event-', '');
+        const ev = await one(`SELECT id,author_id,event_date,event_end_time FROM events WHERE id::text=$1`, [eventId]);
+        if (!ev) throw forbidden('Evento não encontrado.', '23503');
+        const participant = await one(`SELECT 1 FROM event_participants WHERE event_id=$1 AND user_id=$2`, [ev.id, raterId]);
+        if (!participant || !hasEnded(ev.event_date, ev.event_end_time)) {
+          throw forbidden('Você só pode avaliar quem apresentou um evento do qual participou e que já terminou.');
+        }
+        await db.query(`INSERT INTO presentation_speakers(presentation_id, speaker_id) VALUES($1, $2) ON CONFLICT DO NOTHING`, [presentationId, ev.author_id]);
+      } else {
+        throw forbidden('Apresentação não encontrada.', 'PRESENTATION_REQUIRED');
       }
 
       // If speakerId was not provided, auto-resolve it
@@ -1305,8 +1315,13 @@ export function makeRepository(db) {
         throw err;
       }
 
-      // Ensure presentation_speaker relation exists so foreign integrity holds
-      await db.query(`INSERT INTO presentation_speakers(presentation_id, speaker_id) VALUES($1, $2) ON CONFLICT DO NOTHING`, [presentationId, speaker.id]);
+      // O apresentador avaliado precisa estar vinculado à apresentação.
+      const linked = await one(`SELECT 1 FROM presentation_speakers WHERE presentation_id=$1 AND speaker_id=$2`, [presentationId, speaker.id]);
+      if (!linked) {
+        const err = new Error('Esta pessoa não é apresentadora desta apresentação.');
+        err.code = 'SPEAKER_NOT_LINKED';
+        throw err;
+      }
 
       const skills = payload.includeSpeakerSkills ? safeSkills(payload.skills) : {};
       const row = await one(`INSERT INTO presentation_ratings
@@ -1349,10 +1364,10 @@ export function makeRepository(db) {
 
     async getSharedContent(type, id, viewerId = null, shareToken = null) {
       if (type === 'user') {
-        const user = await this.getUser(id);
-        if (!user) return null;
-        const { email, ...publicUser } = user;
-        return { type: 'user', user: publicUser };
+        // Só dados públicos: sem e-mail, número do endereço ou situação de verificação.
+        const user = await this.getPublicUser(id);
+        if (!user || user.status !== 'active') return null;
+        return { type: 'user', user };
       }
       if (!['post', 'presentation', 'event'].includes(type)) return null;
       const contentType = type === 'event' ? 'event' : 'post';
