@@ -854,7 +854,12 @@ export function makeRepository(db) {
         FROM history WHERE user_id=$1 ORDER BY created_at DESC LIMIT 100`, [userId]);
     },
 
-    async createNotification(userId, { title, body, targetType = null, targetId = null, targetToken = null }) {
+    // Respeita a preferência 'Notificações' do usuário; avisos de moderação (essential) sempre chegam.
+    async createNotification(userId, { title, body, targetType = null, targetId = null, targetToken = null, essential = false }) {
+      if (!essential) {
+        const pref = await one(`SELECT notifications_enabled FROM settings WHERE user_id=$1`, [userId]);
+        if (pref && pref.notifications_enabled === false) return null;
+      }
       return one(`INSERT INTO notifications(user_id,title,body,target_type,target_id,target_token)
         VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING RETURNING id,title,body,target_type,target_id,target_token,read_at,created_at`,
         [userId, title, body || '', targetType, targetId ? String(targetId) : null, targetToken || null]);

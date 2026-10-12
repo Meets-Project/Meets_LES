@@ -28,10 +28,6 @@ export function SettingsScreen() {
   const [settings, setSettings] = useState({
     notifications_enabled: true,
     dark_mode: false,
-    email_alerts: true,
-    sound_enabled: true,
-    public_profile: true,
-    allow_messages: true,
   });
 
   // Password change state
@@ -222,8 +218,8 @@ export function SettingsScreen() {
           <View style={screenStyles.rowLeft}>
             <MaterialCommunityIcons name="bell-outline" size={22} color={colors.primary} />
             <View>
-              <Text style={screenStyles.rowTitle}>Notificações Push</Text>
-              <Text style={screenStyles.rowSubtitle}>Avisos sobre eventos e novas mensagens</Text>
+              <Text style={screenStyles.rowTitle}>Notificações</Text>
+              <Text style={screenStyles.rowSubtitle}>Avisos de eventos, mensagens e avaliações no app</Text>
             </View>
           </View>
           <Switch
@@ -234,23 +230,8 @@ export function SettingsScreen() {
           />
         </View>
 
-        <View style={screenStyles.rowItem}>
-          <View style={screenStyles.rowLeft}>
-            <MaterialCommunityIcons name="email-outline" size={22} color={colors.primary} />
-            <View>
-              <Text style={screenStyles.rowTitle}>E-mails de Novidades</Text>
-              <Text style={screenStyles.rowSubtitle}>Resumos semanais da comunidade</Text>
-            </View>
-          </View>
-          <Switch
-            value={settings.email_alerts}
-            onValueChange={(v) => handleToggleSetting('email_alerts', v)}
-            trackColor={{ false: '#d9d9d9', true: colors.primarySoft }}
-            thumbColor={settings.email_alerts ? colors.primary : '#f4f4f4'}
-          />
-        </View>
 
-        <View style={screenStyles.rowItem}>
+        <View style={[screenStyles.rowItem, screenStyles.rowItemLast]}>
           <View style={screenStyles.rowLeft}>
             <MaterialCommunityIcons name="theme-light-dark" size={22} color={colors.primary} />
             <View>
@@ -266,21 +247,6 @@ export function SettingsScreen() {
           />
         </View>
 
-        <View style={[screenStyles.rowItem, screenStyles.rowItemLast]}>
-          <View style={screenStyles.rowLeft}>
-            <MaterialCommunityIcons name="volume-high" size={22} color={colors.primary} />
-            <View>
-              <Text style={screenStyles.rowTitle}>Sons do App</Text>
-              <Text style={screenStyles.rowSubtitle}>Efeitos sonoros ao interagir</Text>
-            </View>
-          </View>
-          <Switch
-            value={settings.sound_enabled}
-            onValueChange={(v) => handleToggleSetting('sound_enabled', v)}
-            trackColor={{ false: '#d9d9d9', true: colors.primarySoft }}
-            thumbColor={settings.sound_enabled ? colors.primary : '#f4f4f4'}
-          />
-        </View>
       </View>
 
       {/* Seção: Segurança & Alterar Senha */}
@@ -433,42 +399,6 @@ export function SettingsScreen() {
         ) : null}
       </View>
 
-      {/* Seção: Privacidade */}
-      <View style={[screenStyles.sectionCard, { marginTop: 14 }]}>
-        <Text style={screenStyles.sectionTitle}>Privacidade</Text>
-
-        <View style={screenStyles.rowItem}>
-          <View style={screenStyles.rowLeft}>
-            <MaterialCommunityIcons name="account-eye-outline" size={22} color={colors.primary} />
-            <View>
-              <Text style={screenStyles.rowTitle}>Perfil Público</Text>
-              <Text style={screenStyles.rowSubtitle}>Outros usuários podem ver suas publicações</Text>
-            </View>
-          </View>
-          <Switch
-            value={settings.public_profile}
-            onValueChange={(v) => handleToggleSetting('public_profile', v)}
-            trackColor={{ false: '#d9d9d9', true: colors.primarySoft }}
-            thumbColor={settings.public_profile ? colors.primary : '#f4f4f4'}
-          />
-        </View>
-
-        <View style={[screenStyles.rowItem, screenStyles.rowItemLast]}>
-          <View style={screenStyles.rowLeft}>
-            <MaterialCommunityIcons name="chat-processing-outline" size={22} color={colors.primary} />
-            <View>
-              <Text style={screenStyles.rowTitle}>Mensagens Diretas</Text>
-              <Text style={screenStyles.rowSubtitle}>Permitir conexões iniciarem conversas</Text>
-            </View>
-          </View>
-          <Switch
-            value={settings.allow_messages}
-            onValueChange={(v) => handleToggleSetting('allow_messages', v)}
-            trackColor={{ false: '#d9d9d9', true: colors.primarySoft }}
-            thumbColor={settings.allow_messages ? colors.primary : '#f4f4f4'}
-          />
-        </View>
-      </View>
 
       {/* Seção: Suporte e Informações */}
       <View style={[screenStyles.sectionCard, { marginTop: 14 }]}>

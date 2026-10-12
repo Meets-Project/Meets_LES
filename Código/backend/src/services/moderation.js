@@ -22,6 +22,7 @@ export function makeModeration({ repo, adminRepo }) {
       await repo.createNotification(item.author_id, {
         title: `Sua ${kindLabel[type] || 'publicação'} foi removida`,
         body: `Um administrador removeu "${title}".${reason ? ` Motivo: ${reason}` : ''}`,
+        essential: true,
       });
     }
     return { removed, authorId: item.author_id, title };
@@ -31,6 +32,7 @@ export function makeModeration({ repo, adminRepo }) {
     await repo.createNotification(userId, {
       title: 'Advertência da moderação',
       body: reason ? `Um administrador enviou uma advertência: ${reason}` : 'Um administrador enviou uma advertência sobre um conteúdo seu.',
+      essential: true,
     });
     await adminRepo.logAction(adminId, { action: 'user_warned', targetType: 'user', targetId: userId, note: reason });
   }
@@ -53,7 +55,7 @@ export function makeModeration({ repo, adminRepo }) {
     if (!account) throw new ModerationError('Usuário não encontrado.', 'NOT_FOUND', 404);
     const result = await repo.reactivateUser(userId);
     await adminRepo.logAction(adminId, { action: 'user_reactivated', targetType: 'user', targetId: userId, note });
-    await repo.createNotification(userId, { title: 'Conta reativada', body: 'Um administrador reativou a sua conta no Meets.' });
+    await repo.createNotification(userId, { title: 'Conta reativada', body: 'Um administrador reativou a sua conta no Meets.', essential: true });
     return result;
   }
 

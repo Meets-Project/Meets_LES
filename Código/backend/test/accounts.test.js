@@ -72,3 +72,18 @@ describe('Conta: troca de senha e desativação', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('Preferência de notificações', () => {
+  it('com notificações desligadas, avisos comuns não chegam, mas os de moderação sim', async () => {
+    const { app, db } = await createTestApp();
+    const repo = makeRepository(db);
+    const a = await signup(app, { email: 'a@example.com' });
+    const b = await signup(app, { email: 'b@example.com' });
+    await request(app).put('/settings').set(auth(a.token)).send({ notificationsEnabled: false });
+    await request(app).post(`/users/${a.user.id}/connect`).set(auth(b.token));
+    await repo.createNotification(a.user.id, { title: 'Moderação', body: 'x', essential: true });
+    const notes = await request(app).get('/notifications').set(auth(a.token));
+    expect(notes.body.data.some((n) => n.title.includes('Nova conexão'))).toBe(false);
+    expect(notes.body.data.some((n) => n.title === 'Moderação')).toBe(true);
+  });
+});

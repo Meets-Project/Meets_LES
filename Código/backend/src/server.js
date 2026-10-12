@@ -82,6 +82,10 @@ async function notifyFinished() {
           )
       ) target
       WHERE NOT EXISTS (
+        SELECT 1 FROM settings st
+        WHERE st.user_id = target.user_id AND st.notifications_enabled = FALSE
+      )
+      AND NOT EXISTS (
         SELECT 1
         FROM notifications n
         WHERE
