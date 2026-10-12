@@ -32,6 +32,7 @@ export function FeedCard({ item, onRefresh }) {
   const [showMenu, setShowMenu] = useState(false);
   const [removed, setRemoved] = useState(false);
   const [showReport, setShowReport] = useState(false);
+  const [sharesCount, setSharesCount] = useState(Number(item.shares_count || 0));
 
   useEffect(() => {
     let active = true;
@@ -134,14 +135,15 @@ export function FeedCard({ item, onRefresh }) {
     }
   }
 
-  function handleShare() {
-    shareContent({
+  async function handleShare() {
+    const result = await shareContent({
       type: isEvent ? 'event' : isPresentation ? 'presentation' : 'post',
       id: item.id,
       token: item.share_token || '',
       title: item.title || item.content || 'Publicação no Meets',
       text: item.title ? `${item.title} - ${item.content || ''}` : item.content,
     });
+    if (result?.shares !== undefined) setSharesCount(Number(result.shares));
   }
 
   const isOwn = Boolean(currentUser?.id && authorId && currentUser.id === authorId);
@@ -444,7 +446,7 @@ export function FeedCard({ item, onRefresh }) {
         {/* COMPARTILHAR */}
         <TouchableOpacity style={feedCardStyles.actionButton} onPress={handleShare}>
           <MaterialCommunityIcons name="share-variant-outline" size={20} color={colors.textMuted} />
-          <Text style={feedCardStyles.actionText}>Compartilhar</Text>
+          <Text style={feedCardStyles.actionText}>{sharesCount > 0 ? sharesCount : 'Compartilhar'}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={feedCardStyles.actionButton} onPress={save}>

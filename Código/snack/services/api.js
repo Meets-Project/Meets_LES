@@ -245,3 +245,8 @@ export async function adminListReports(status = 'open') { return (await requestJ
 export async function adminGetReport(id) { return (await requestJson(`/admin/reports/${encodeURIComponent(id)}`)).data; }
 export async function adminStartReport(id) { return (await requestJson(`/admin/reports/${encodeURIComponent(id)}/start`, { method: 'POST', body: JSON.stringify({}) })).data; }
 export async function adminDecideReport(id, payload) { return (await requestJson(`/admin/reports/${encodeURIComponent(id)}/decide`, { method: 'POST', body: JSON.stringify(payload) })).data; }
+
+// --- COMPARTILHAMENTOS ---
+export async function registerShare(contentType, contentId) {
+  return (await requestJson('/shares', { method: 'POST', body: JSON.stringify({ contentType, contentId }) })).data;
+}

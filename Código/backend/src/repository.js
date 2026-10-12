@@ -30,6 +30,14 @@ export function makeRepository(db) {
     };
   };
 
+  // Quantos compartilhamentos cada conteúdo teve (content_shares).
+  const shareCounts = async (type, ids) => {
+    if (!ids.length) return {};
+    const rows = await many(`SELECT content_id, count(*)::int AS total FROM content_shares
+      WHERE content_type=$1 AND content_id = ANY($2) GROUP BY content_id`, [type, ids]);
+    return Object.fromEntries(rows.map((r) => [r.content_id, Number(r.total)]));
+  };
+
   const addHistory = async (userId, { type, title, subtitle = '' }) =>
     one(`INSERT INTO history(user_id,type,title,subtitle)
          VALUES($1,$2,$3,$4)
@@ -567,6 +575,13 @@ export function makeRepository(db) {
       if (filter === 'connections' && userId) {
         formattedEvents = formattedEvents.filter(e => connectedSet.has(e.author.id));
       }
+
+      const [postShares, eventShares] = await Promise.all([
+        shareCounts('post', formattedPosts.map((p) => p.id)),
+        shareCounts('event', formattedEvents.map((e) => e.id)),
+      ]);
+      formattedPosts.forEach((p) => { p.shares_count = postShares[p.id] || 0; });
+      formattedEvents.forEach((e) => { e.shares_count = eventShares[e.id] || 0; });
 
       return [...formattedPosts, ...formattedEvents].sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, limit);
     },
@@ -1378,6 +1393,25 @@ export function makeRepository(db) {
         ? Boolean(await one(`SELECT 1 FROM event_participants WHERE event_id=$1 AND user_id=$2`, [post.mentioned_event.id, viewerId]))
         : false;
       return { ...post, type: type === 'presentation' ? 'presentation' : post.type, is_participating: isParticipating };
+    },
+
+    // Registra que o link de um conteúdo foi gerado/compartilhado e devolve o total.
+    async registerShare(userId, { contentType, contentId }) {
+      const type = contentType === 'presentation' ? 'post' : contentType;
+      if (type === 'post' || type === 'event') {
+        if (!(await canView(type, contentId, userId))) {
+          const error = new Error('Você não tem permissão para compartilhar este conteúdo.');
+          error.code = 'FORBIDDEN';
+          throw error;
+        }
+      } else if (type === 'user') {
+        const target = await one(`SELECT id FROM users WHERE id=$1 AND status='active'`, [contentId]);
+        if (!target) { const err = new Error('Perfil não encontrado.'); err.code = '23503'; throw err; }
+      }
+      await db.query(`INSERT INTO content_shares(user_id,content_type,content_id) VALUES($1,$2,$3)`, [userId, type, contentId]);
+      const total = await one(`SELECT count(*)::int AS total FROM content_shares WHERE content_type=$1 AND content_id=$2`, [type, contentId]);
+      if (type !== 'user') await addHistory(userId, { type: 'share', title: type === 'event' ? 'Compartilhou um evento' : 'Compartilhou uma publicação', subtitle: String(contentId) });
+      return { contentType: type, contentId, shares: Number(total?.total || 0) };
     },
 
     async deleteOwnPost(userId, postId) {

@@ -509,6 +509,17 @@ export function createApp({ query = defaultQuery } = {}) {
     } catch (e) { next(e); }
   });
 
+  // Compartilhar (#003 e #004): registra o compartilhamento para as estatísticas.
+  app.post('/shares', requireAuth, async (req, res, next) => {
+    try {
+      const data = z.object({
+        contentType: z.enum(['post', 'presentation', 'event', 'user']),
+        contentId: z.string().uuid(),
+      }).parse(req.body);
+      res.status(201).json({ data: await repo.registerShare(req.auth.sub, data) });
+    } catch (e) { next(e); }
+  });
+
   app.post('/posts/:id/like', requireAuth, async (req, res, next) => {
     try { res.json({ data: await repo.toggleLike(req.auth.sub, req.params.id) }); } catch (e) { next(e); }
   });

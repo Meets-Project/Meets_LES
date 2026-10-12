@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import request from 'supertest';
-import { createTestApp, signup } from './helpers.js';
+import { auth, createTestApp, signup } from './helpers.js';
 
 describe('API: cadastro, login e perfil', () => {
   let app, db;
@@ -24,5 +24,31 @@ describe('API: cadastro, login e perfil', () => {
   it('recusa rota protegida sem token', async () => {
     const res = await request(app).get('/users/me');
     expect(res.status).toBe(401);
+  });
+});
+
+describe('Compartilhamentos', () => {
+  let app;
+  beforeEach(async () => {
+    ({ app } = await createTestApp());
+  });
+
+  it('registra o compartilhamento e o feed mostra a contagem', async () => {
+    const a = await signup(app, { email: 'a@example.com' });
+    const b = await signup(app, { email: 'b@example.com' });
+    const post = (await request(app).post('/posts').set(auth(a.token)).send({ content: 'Compartilhe' })).body.data;
+    const first = await request(app).post('/shares').set(auth(b.token)).send({ contentType: 'post', contentId: post.id });
+    expect(first.status).toBe(201);
+    await request(app).post('/shares').set(auth(a.token)).send({ contentType: 'presentation', contentId: post.id });
+    const feed = await request(app).get('/feed').set(auth(b.token));
+    expect(feed.body.data.find((i) => i.id === post.id).shares_count).toBe(2);
+  });
+
+  it('não registra compartilhamento de conteúdo privado que a pessoa não vê', async () => {
+    const a = await signup(app, { email: 'a@example.com' });
+    const b = await signup(app, { email: 'b@example.com' });
+    const post = (await request(app).post('/posts').set(auth(a.token)).send({ content: 'Só seguidores', visibility: 'followers' })).body.data;
+    const res = await request(app).post('/shares').set(auth(b.token)).send({ contentType: 'post', contentId: post.id });
+    expect(res.status).toBe(403);
   });
 });
