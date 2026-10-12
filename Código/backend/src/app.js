@@ -748,6 +748,19 @@ export function createApp({ query = defaultQuery } = {}) {
     } catch (e) { next(e); }
   });
 
+  // #008 Visualizar Dashboards. scope=me (o próprio conteúdo) ou scope=platform (só administradores).
+  app.get('/dashboard', requireAuth, async (req, res, next) => {
+    try {
+      const scope = req.query.scope === 'platform' ? 'platform' : 'me';
+      if (scope === 'platform' && !req.auth.isAdmin) {
+        return res.status(403).json({ message: 'O dashboard da plataforma é exclusivo dos administradores.', code: 'ADMIN_ONLY' });
+      }
+      const days = Number(req.query.days || 0);
+      const since = Number.isFinite(days) && days > 0 ? new Date(Date.now() - days * 86400000) : null;
+      res.json({ data: await analyticsRepo.dashboard({ scope, ownerId: req.auth.sub, since }) });
+    } catch (e) { next(e); }
+  });
+
   app.get('/ratings/speakers/:speakerId', requireAuth, async (req, res, next) => {
     try { res.json({ data: await repo.getSpeakerRatingSummary(req.params.speakerId) }); } catch (e) { next(e); }
   });

@@ -253,3 +253,6 @@ export async function registerShare(contentType, contentId) {
 
 // --- RANKING E DASHBOARDS ---
 export async function getRanking(days = 0) { return (await requestJson(`/ranking${days ? `?days=${days}` : ''}`)).data; }
+export async function getDashboard({ scope = 'me', days = 0 } = {}) {
+  return (await requestJson(`/dashboard${queryString({ scope, days: days || undefined })}`)).data;
+}
