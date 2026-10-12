@@ -1,0 +1,20 @@
+---
+title: Diagrama de atividade — Lembrar Avaliação Pendente (#015, automação)
+---
+flowchart TB
+  ini((A cada 60 segundos))
+  a1[Agendador do servidor busca eventos e apresentações com data e horário de fim]
+  d1{Terminou no horário de Brasília?}
+  a2[Lista os participantes de cada item terminado]
+  d2{O participante desligou as notificações?}
+  d3{Já recebeu o lembrete deste item?}
+  a3[Cria a notificação Avalie o evento ou Avalie a apresentação, com link direto]
+  a4[Ignora este participante]
+  fim((Aguarda o próximo ciclo))
+  ini --> a1 --> d1
+  d1 -- não --> fim
+  d1 -- sim --> a2 --> d2
+  d2 -- sim --> a4 --> fim
+  d2 -- não --> d3
+  d3 -- sim --> a4
+  d3 -- não --> a3 --> fim

@@ -1,0 +1,13 @@
+---
+title: Estado do Processo de Avaliação (evento ou apresentação)
+---
+stateDiagram-v2
+  direction TB
+  [*] --> Bloqueada : evento/apresentação ainda não terminou
+  Bloqueada --> Liberada : terminou e a pessoa participou
+  Liberada --> Preenchendo : abrir avaliação (lembrete, feed ou calendário)
+  Preenchendo --> Validando : enviar
+  Validando --> Preenchendo : nota fora da escala
+  Validando --> Registrada : dados válidos
+  Registrada --> Preenchendo : editar avaliação
+  Registrada --> [*]

@@ -1,0 +1,92 @@
+---
+title: Diagrama de classe — Usuários e Conteúdo
+---
+classDiagram
+  direction LR
+  class Usuario {
+    +UUID id
+    +String nome
+    +String email
+    -String senhaHash
+    +String tipo  «usuário | administrador»
+    +String situacao  «ativa | desativada»
+    +Boolean emailVerificado
+    +DateTime desativadaEm
+    +String motivoDesativacao
+    +cadastrar()
+    +verificarEmail(codigo)
+    +fazerLogin(email, senha)
+    +alterarSenha(atual, nova)
+    +desativarConta(senha)
+  }
+  class Administrador {
+    +manterUsuarios()
+    +analisarDenuncia()
+    +removerConteudo()
+    +reativarConta(usuario)
+  }
+  class Perfil {
+    +String cargo
+    +String cidade
+    +String numeroEndereco
+    +String foto
+    +String biografia
+    +editar()
+    +compartilhar()
+  }
+  class Configuracao {
+    +Boolean notificacoesAtivas
+    +Boolean modoEscuro
+    +alterar()
+  }
+  class Post {
+    +UUID id
+    +String titulo
+    +String conteudo
+    +String imagem
+    +String visibilidade  «pública | seguidores | selecionados | link»
+    +String tokenCompartilhamento
+    +DateTime dataPublicacao
+    +publicar()
+    +editar()
+    +excluir()
+  }
+  class Apresentacao {
+    +String idApresentacao
+    +Date data
+    +Time inicio
+    +Time fim
+    +vincularApresentadores()
+    +terminou() Boolean
+  }
+  class Evento {
+    +UUID id
+    +String titulo
+    +String descricao
+    +String imagem
+    +Date data
+    +Time inicio
+    +Time fim
+    +String local
+    +String visibilidade
+    +String tokenCompartilhamento
+    +criar()
+    +editar()
+    +excluir()
+    +terminou() Boolean
+  }
+  Usuario <|-- Administrador
+  Usuario "1" *-- "1" Perfil : possui
+  Usuario "1" *-- "1" Configuracao : define
+  Usuario "1" --> "0..*" Post : publica
+  Usuario "1" --> "0..*" Evento : organiza
+  Post <|-- Apresentacao
+  Apresentacao "0..*" --> "0..1" Evento : acontece em
+  Usuario "1..*" -- "0..*" Apresentacao : apresenta
+  class Conexao {
+    +DateTime desde
+    +seguir()
+    +deixarDeSeguir()
+  }
+  Usuario "1" --> "0..*" Conexao : segue
+  Conexao "0..*" --> "1" Usuario : seguido

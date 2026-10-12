@@ -1,0 +1,38 @@
+---
+title: Atividade 2 — Publicação de conteúdo e interação na comunidade
+---
+flowchart TB
+  ini((Início))
+  subgraph AUT[Autor]
+    a1[Escreve o texto, escolhe imagem opcional e pode mencionar um evento]
+    a2[Escolhe quem vê: público, seguidores, selecionados ou só com link]
+    a3{Quer alterar depois?}
+    a4[Edita o post]
+    a5[Exclui o post]
+  end
+  subgraph SIS[Sistema Meets]
+    s1{Texto preenchido e imagem dentro do limite?}
+    s2[Pede correção]
+    s3[Publica e mostra no feed só para quem pode ver]
+    s4[Atualiza contadores e o histórico]
+    s5[Gera o link e registra o compartilhamento]
+  end
+  subgraph MEM[Membros da comunidade]
+    m1{Interação}
+    m2[Curtir ou descurtir]
+    m3[Comentar]
+    m4[Compartilhar]
+    m5[Salvar ou favoritar]
+  end
+  fim((Fim))
+  ini --> a1 --> a2 --> s1
+  s1 -- não --> s2 --> a1
+  s1 -- sim --> s3 --> m1
+  m1 --> m2 --> s4
+  m1 --> m3 --> s4
+  m1 --> m4 --> s5 --> s4
+  m1 --> m5 --> s4
+  s4 --> a3
+  a3 -- editar --> a4 --> s3
+  a3 -- excluir --> a5 --> fim
+  a3 -- não --> fim

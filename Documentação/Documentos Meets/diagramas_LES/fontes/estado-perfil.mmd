@@ -1,0 +1,11 @@
+---
+title: Estado do Perfil
+---
+stateDiagram-v2
+  direction LR
+  [*] --> Visivel : criado no cadastro
+  Visivel : Visível
+  Visivel --> Editando : editar
+  Editando --> Visivel : salvar ou cancelar
+  Visivel --> Oculto : conta desativada
+  Oculto --> Visivel : admin reativa a conta

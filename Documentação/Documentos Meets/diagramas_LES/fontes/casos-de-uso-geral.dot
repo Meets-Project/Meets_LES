@@ -1,0 +1,45 @@
+// Diagrama geral de casos de uso do Meets. Gerar: dot -Tpng -Gdpi=130 casos-de-uso-geral.dot -o casos-de-uso-geral.png
+digraph UC {
+  graph [rankdir=LR, ordering=out, fontname="Arial", label="Diagrama geral de casos de uso — Meets", labelloc=t, fontsize=20, nodesep=0.18, ranksep=1.4, pad=0.3];
+  node [fontname="Arial", fontsize=11];
+  edge [arrowhead=none, color="#444444"];
+
+  VIS [label="Visitante", shape=plaintext, label=<<table border="0" cellborder="0"><tr><td><font point-size="28">&#9786;</font></td></tr><tr><td>Visitante</td></tr></table>>];
+  USR [label=<<table border="0" cellborder="0"><tr><td><font point-size="28">&#9786;</font></td></tr><tr><td>Usuário</td></tr></table>>, shape=plaintext];
+  ADM [label=<<table border="0" cellborder="0"><tr><td><font point-size="28">&#9786;</font></td></tr><tr><td>Administrador</td></tr></table>>, shape=plaintext];
+  AGD [label=<<table border="0" cellborder="0"><tr><td><font point-size="28">&#9881;</font></td></tr><tr><td>Agendador do Sistema</td></tr></table>>, shape=plaintext];
+
+  subgraph cluster_sys {
+    label="Sistema Meets"; fontsize=14; style=rounded; color="#555555"; margin=16;
+    node [shape=ellipse, style=filled, fillcolor="#f4f4f4", width=2.9, fixedsize=false];
+    uc014 [label="#014 Cadastrar Usuário"]; uc001 [label="#001 Fazer Login"];
+    uc002 [label="#002 Visualizar Feed"]; uc003 [label="#003 Interagir com Posts"]; uc004 [label="#004 Interagir com Eventos"];
+    uc005 [label="#005 Avaliar Evento", fillcolor="#e3ecf7"]; uc006 [label="#006 Avaliar Apresentador", fillcolor="#e3ecf7"];
+    uc007 [label="#007 Visualizar Ranking\nde Apresentadores", fillcolor="#e3ecf7"]; uc008 [label="#008 Visualizar Dashboards", fillcolor="#e3ecf7"];
+    uc009 [label="#009 Manter Posts"]; uc010 [label="#010 Manter Perfil"]; uc011 [label="#011 Manter Eventos"];
+    uc016 [label="#016 Denunciar Conteúdo"]; uc017 [label="#017 Conectar-se a Usuários"]; uc018 [label="#018 Conversar"];
+    uc019 [label="#019 Visualizar Notificações"]; uc020 [label="#020 Pesquisar"]; uc021 [label="#021 Consultar Histórico"];
+    uc022 [label="#022 Gerenciar Configurações"];
+    uc012 [label="#012 Manter Usuários"]; uc013 [label="#013 Analisar Denúncias", fillcolor="#e3ecf7"]; uc023 [label="#023 Remover Conteúdo Impróprio"];
+    uc015 [label="#015 Lembrar Avaliação Pendente", fillcolor="#e8f3e3"];
+  }
+
+  // legenda
+  subgraph cluster_leg { label="Tipo"; fontsize=11; style=dashed; color="#999999";
+    node [shape=box, style=filled, fontsize=10, width=1.2];
+    l1 [label="Básico", fillcolor="#f4f4f4"]; l2 [label="Análise", fillcolor="#e3ecf7"]; l3 [label="Condução\n(automação)", fillcolor="#e8f3e3"];
+    l1 -> l2 -> l3 [style=invis];
+  }
+
+  VIS -> uc014; VIS -> uc001;
+  USR -> {uc002 uc003 uc004 uc005 uc006 uc007 uc008 uc009 uc010 uc011 uc016 uc017 uc018 uc019 uc020 uc021 uc022};
+  ADM -> {uc012 uc013 uc023};
+  ADM -> USR [arrowhead=onormal, style=solid, constraint=false, label="generalização", fontsize=9, fontname="Arial"];
+  AGD -> uc015 [dir=forward, arrowhead=none];
+  uc015 -> uc019 [style=dashed, arrowhead=vee, label="«include»", fontsize=9, fontname="Arial", constraint=false];
+  uc023 -> uc013 [style=dashed, arrowhead=vee, label="«extend»", fontsize=9, fontname="Arial", constraint=false];
+
+  VIS -> USR -> ADM [style=invis];
+  {rank=same; VIS; USR; ADM;}
+  uc015 -> l1 [style=invis];
+}

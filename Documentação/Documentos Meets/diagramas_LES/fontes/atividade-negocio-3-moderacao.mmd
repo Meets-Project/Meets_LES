@@ -1,0 +1,33 @@
+---
+title: Atividade 3 — Moderação e controle de qualidade
+---
+flowchart TB
+  ini((Início))
+  subgraph USU[Usuário]
+    u1[Encontra post, evento ou perfil impróprio e toca em Denunciar]
+    u2[Escolhe o motivo e descreve, se quiser]
+    u3[Recebe o resultado da análise]
+  end
+  subgraph SIS[Sistema Meets]
+    s1{É o próprio conteúdo ou já há denúncia aberta dessa pessoa?}
+    s2[Recusa e informa o motivo]
+    s3[Registra a denúncia como Pendente e avisa os administradores]
+    s4[Executa a ação e avisa o autor]
+    s5[Registra a decisão e a ação no log de administração]
+    s6[Fecha as outras denúncias abertas sobre o mesmo alvo]
+  end
+  subgraph ADM[Administrador]
+    d1[Abre a fila de denúncias e inicia a análise]
+    d2{Há violação das regras?}
+    d3[Marca como Improcedente: o conteúdo continua]
+    d4[Marca como Procedente e escolhe a ação: remover conteúdo, advertir o autor ou desativar a conta]
+  end
+  fim((Fim))
+  ini --> u1 --> u2 --> s1
+  s1 -- sim --> s2 --> fim
+  s1 -- não --> s3 --> d1 --> d2
+  d2 -- não --> d3 --> s5
+  d2 -- sim --> d4 --> s4 --> s5
+  s5 -- remoção ou desativação --> s6 --> u3
+  s5 -- outros casos --> u3
+  u3 --> fim

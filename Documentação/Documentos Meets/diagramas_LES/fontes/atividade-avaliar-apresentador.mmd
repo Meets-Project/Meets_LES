@@ -1,0 +1,30 @@
+---
+title: Diagrama de atividade — Avaliar Apresentador (#006)
+---
+flowchart TB
+  ini((Início))
+  a1[Usuário abre a avaliação da apresentação: lembrete, feed, calendário ou Criar > Avaliar]
+  d1{É uma apresentação e já terminou?}
+  e1[Informa que a avaliação libera após o horário de fim]
+  d2{Participou do evento da apresentação ou é coapresentador?}
+  e2[Informa que só quem participou pode avaliar]
+  a2[Exibe os apresentadores vinculados, as estrelas e os 6 atributos de 0 a 99]
+  a3[Usuário escolhe o apresentador, dá estrelas e notas por atributo e confirma]
+  d3{Está avaliando a si mesmo?}
+  e3[Recusa: ninguém avalia a si mesmo]
+  d4{Notas dentro da escala?}
+  e4[Pede correção]
+  a4[Registra ou atualiza a avaliação]
+  a5[Recalcula a média de cada atributo e a pontuação geral]
+  a6[O ranking passa a usar a nova pontuação]
+  a7[Exibe a confirmação]
+  fim((Fim))
+  ini --> a1 --> d1
+  d1 -- não --> e1 --> fim
+  d1 -- sim --> d2
+  d2 -- não --> e2 --> fim
+  d2 -- sim --> a2 --> a3 --> d3
+  d3 -- sim --> e3 --> a3
+  d3 -- não --> d4
+  d4 -- não --> e4 --> a3
+  d4 -- sim --> a4 --> a5 --> a6 --> a7 --> fim

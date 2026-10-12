@@ -1,0 +1,40 @@
+---
+title: Diagrama de sequência — Denunciar (#016) e Analisar Denúncias (#013)
+---
+sequenceDiagram
+  actor U as Usuário
+  actor A as Administrador
+  participant T@{ "type": "boundary" } as Telas (ReportModal e AdminReportDetail)
+  participant C@{ "type": "control" } as API (reportRoutes)
+  participant M@{ "type": "control" } as Moderação (services/moderation)
+  participant R@{ "type": "entity" } as Repositórios
+  participant D@{ "type": "database" } as PostgreSQL
+  U->>T: Denunciar → escolhe o motivo
+  T->>C: POST /reports {targetType, targetId, reason, details}
+  C->>R: describeTarget / findOpenByReporter
+  R->>D: SELECT alvo e denúncia aberta
+  alt próprio conteúdo ou denúncia já aberta
+    C-->>T: 400 ou 409 com o motivo
+  else ok
+    C->>R: create (situação: pendente)
+    R->>D: INSERT reports
+    C->>R: createNotification para cada admin
+    C-->>T: 201 denúncia enviada
+  end
+  A->>T: abre a denúncia na fila
+  T->>C: POST /admin/reports/:id/start
+  C->>R: startReview → situação: em análise
+  R->>D: UPDATE reports
+  A->>T: decide (improcedente ou procedente + ação) e justifica
+  T->>C: POST /admin/reports/:id/decide
+  alt procedente
+    C->>M: removeContent, warnUser ou deactivateUser
+    M->>D: DELETE conteúdo / INSERT notificação / UPDATE users
+    M->>R: logAction (admin_actions)
+    C->>R: closeOthersOnTarget (remoção ou desativação)
+  end
+  C->>R: decide (improcedente ou procedente)
+  R->>D: UPDATE reports + INSERT admin_actions
+  C->>R: notifica quem denunciou
+  C-->>T: resultado da análise
+  T-->>A: mostra o resultado

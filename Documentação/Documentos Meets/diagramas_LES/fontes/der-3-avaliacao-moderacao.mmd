@@ -1,0 +1,89 @@
+---
+title: DER — Avaliação, moderação e auditoria
+---
+erDiagram
+  users {
+    uuid id PK
+    varchar name
+    varchar email
+    varchar account_type
+    varchar status
+  }
+  posts {
+    uuid id PK
+    uuid author_id FK
+    varchar title
+    uuid mentioned_event_id FK
+  }
+  events {
+    uuid id PK
+    uuid author_id FK
+    varchar title
+  }
+  presentation_speakers {
+    varchar presentation_id PK
+    uuid speaker_id PK,FK
+    timestamptz created_at
+  }
+  presentation_ratings {
+    bigint id PK
+    varchar presentation_id
+    uuid post_id FK
+    uuid rater_id FK
+    uuid speaker_id FK
+    numeric stars
+    jsonb skills
+    varchar comment
+    timestamptz created_at
+    timestamptz updated_at
+    varchar visibility
+  }
+  event_ratings {
+    bigint id PK
+    uuid event_id FK
+    uuid rater_id FK
+    numeric stars
+    varchar comment
+    varchar visibility
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  reports {
+    uuid id PK
+    uuid reporter_id FK
+    varchar target_type
+    uuid target_id
+    uuid target_owner_id FK
+    varchar target_preview
+    varchar reason
+    varchar details
+    varchar status
+    varchar action
+    varchar decision_note
+    uuid reviewed_by FK
+    timestamptz review_started_at
+    timestamptz decided_at
+    timestamptz created_at
+  }
+  admin_actions {
+    bigint id PK
+    uuid admin_id FK
+    varchar action
+    varchar target_type
+    text target_id
+    varchar note
+    timestamptz created_at
+  }
+  users ||--o{ posts : "author_id"
+  events |o--o{ posts : "mentioned_event_id"
+  users ||--o{ events : "author_id"
+  users ||--o{ presentation_speakers : "speaker_id"
+  posts |o--o{ presentation_ratings : "post_id"
+  users ||--o{ presentation_ratings : "rater_id"
+  users ||--o{ presentation_ratings : "speaker_id"
+  events ||--o{ event_ratings : "event_id"
+  users ||--o{ event_ratings : "rater_id"
+  users |o--o{ reports : "reporter_id"
+  users |o--o{ reports : "target_owner_id"
+  users |o--o{ reports : "reviewed_by"
+  users |o--o{ admin_actions : "admin_id"

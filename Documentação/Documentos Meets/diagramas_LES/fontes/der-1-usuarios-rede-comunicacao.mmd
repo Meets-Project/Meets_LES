@@ -1,0 +1,88 @@
+---
+title: DER — Usuários, perfil, rede e comunicação
+---
+erDiagram
+  users {
+    uuid id PK
+    varchar name
+    varchar email
+    text password_hash
+    timestamptz created_at
+    timestamptz updated_at
+    boolean email_verified
+    text email_verification_token_hash
+    timestamptz email_verification_expires_at
+    varchar account_type
+    varchar status
+    timestamptz deactivated_at
+    uuid deactivated_by FK
+    varchar deactivation_reason
+  }
+  profiles {
+    uuid user_id PK,FK
+    varchar role
+    varchar city
+    varchar address_number
+    text avatar
+    text bio
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  settings {
+    uuid user_id PK,FK
+    boolean notifications_enabled
+    boolean dark_mode
+    timestamptz updated_at
+  }
+  user_connections {
+    uuid user_id PK,FK
+    uuid connected_user_id PK,FK
+    timestamptz created_at
+  }
+  history {
+    bigint id PK
+    uuid user_id FK
+    varchar type
+    varchar title
+    varchar subtitle
+    timestamptz created_at
+  }
+  notifications {
+    bigint id PK
+    uuid user_id FK
+    varchar title
+    varchar body
+    timestamptz read_at
+    timestamptz created_at
+    varchar target_type
+    text target_id
+    text target_token
+  }
+  chats {
+    uuid id PK
+    varchar name
+    varchar preview
+    timestamptz created_at
+  }
+  chat_members {
+    uuid chat_id PK,FK
+    uuid user_id PK,FK
+    int unread
+  }
+  chat_messages {
+    uuid id PK
+    uuid chat_id FK
+    uuid sender_id FK
+    text content
+    timestamptz created_at
+  }
+  users ||--|| profiles : "user_id"
+  users ||--|| settings : "user_id"
+  users ||--o{ user_connections : "user_id"
+  users ||--o{ user_connections : "connected_user_id"
+  users ||--o{ history : "user_id"
+  users ||--o{ notifications : "user_id"
+  chats ||--o{ chat_members : "chat_id"
+  users ||--o{ chat_members : "user_id"
+  chats ||--o{ chat_messages : "chat_id"
+  users ||--o{ chat_messages : "sender_id"

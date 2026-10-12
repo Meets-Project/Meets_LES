@@ -1,0 +1,7 @@
+{
+  "theme": "neutral",
+  "themeVariables": { "fontFamily": "Arial, Helvetica, sans-serif", "fontSize": "15px" },
+  "class": { "hideEmptyMembersBox": true },
+  "flowchart": { "curve": "basis", "htmlLabels": true },
+  "sequence": { "showSequenceNumbers": true, "mirrorActors": false }
+}

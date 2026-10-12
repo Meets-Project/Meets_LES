@@ -1,0 +1,35 @@
+---
+title: Atividade 1 — Organização e realização de evento
+---
+flowchart TB
+  ini((Início))
+  subgraph ORG[Organizador]
+    a1[Preenche título, descrição, data, início, fim, local, visibilidade e imagem]
+    a2[Cadastra apresentação vinculada ao evento, com horário e apresentadores]
+  end
+  subgraph SIS[Sistema Meets]
+    s1{Dados válidos?}
+    s2[Mostra o erro: campo obrigatório, data passada ou fim antes do início]
+    s3[Publica o evento e registra o organizador como host]
+    s4[Registra ou cancela a presença; ao confirmar, avisa o organizador]
+    s5[A cada minuto verifica eventos e apresentações que terminaram]
+    s6[Envia lembrete de avaliação a quem participou]
+    s7[Registra as avaliações, recalcula médias, pontuação e ranking]
+  end
+  subgraph PAR[Participante]
+    p1[Vê o evento no feed; curte, comenta ou compartilha]
+    p2{Já confirmou presença?}
+    p3[Confirma presença]
+    p4[Pode cancelar a presença]
+    p5[Avalia o evento de 1 a 5 estrelas e o apresentador por atributos]
+  end
+  fim((Fim))
+  ini --> a1 --> s1
+  s1 -- não --> s2 --> a1
+  s1 -- sim --> s3
+  s3 -.-> a2
+  s3 --> p1 --> p2
+  p2 -- não --> p3 --> s4
+  p2 -- sim --> p4 --> s4
+  s4 --> s5
+  s5 -- evento terminou --> s6 --> p5 --> s7 --> fim

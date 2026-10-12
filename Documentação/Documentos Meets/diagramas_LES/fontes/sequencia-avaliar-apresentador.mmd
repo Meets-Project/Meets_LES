@@ -1,0 +1,42 @@
+---
+title: Diagrama de sequência — Avaliar Apresentador (#006)
+---
+sequenceDiagram
+  actor U as Usuário
+  participant T@{ "type": "boundary" } as PresentationRatingScreen (app)
+  participant C@{ "type": "control" } as API POST /ratings/presentations
+  participant R@{ "type": "entity" } as Repositório (createRating)
+  participant S@{ "type": "control" } as scoring.js
+  participant D@{ "type": "database" } as PostgreSQL
+  U->>T: abre a avaliação da apresentação
+  T-->>U: exibe apresentadores, estrelas e 6 atributos (0 a 99)
+  U->>T: escolhe o apresentador, as notas e confirma
+  T->>C: POST {postId, speakerId, stars, skills, comment, visibility}
+  C->>C: valida o corpo (Zod)
+  C->>R: createRating(usuário, dados)
+  R->>D: SELECT apresentação (post do tipo apresentação)
+  D-->>R: apresentação, horário de fim, evento vinculado
+  alt não é apresentação, não terminou ou não participou do evento
+    R-->>C: erro
+    C-->>T: 400 ou 403 com o motivo
+    T-->>U: mostra a mensagem
+  else pode avaliar
+    R->>D: SELECT vínculo apresentador ↔ apresentação
+    alt apresentador não vinculado ou é o próprio avaliador
+      R-->>C: erro SPEAKER_NOT_LINKED ou SELF_RATING
+      C-->>T: 400 com o motivo
+    else válido
+      R->>D: INSERT presentation_ratings ... ON CONFLICT DO UPDATE
+      R->>D: INSERT history (Avaliou uma apresentação)
+      R-->>C: avaliação
+      C-->>T: 201 avaliação
+      T->>C: GET /ratings/speakers/:id
+      C->>R: getSpeakerRatingSummary(id)
+      R->>D: SELECT avaliações do apresentador
+      R->>S: summarizeSpeakerRatings(avaliações)
+      S-->>R: média por atributo e pontuação geral
+      R-->>C: resumo
+      C-->>T: resumo (mesma pontuação usada no ranking)
+      T-->>U: confirma e mostra a nova pontuação
+    end
+  end
