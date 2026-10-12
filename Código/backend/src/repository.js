@@ -3,6 +3,33 @@ export function makeRepository(db) {
   const one = async (sql, params = []) => (await db.query(sql, params)).rows[0] || null;
   const many = async (sql, params = []) => (await db.query(sql, params)).rows;
 
+  // Campos de usuário + perfil devolvidos pela API (mesmo formato de antes da separação).
+  const USER_COLUMNS = `u.id,u.name,u.email,u.email_verified,u.created_at,u.updated_at,
+    COALESCE(up.role,'Membro') AS role, COALESCE(up.city,'') AS city,
+    COALESCE(up.address_number,'') AS address_number, COALESCE(up.avatar,'👤') AS avatar,
+    COALESCE(up.bio,'') AS bio`;
+  const PUBLIC_USER_COLUMNS = `u.id,u.name,u.created_at,
+    COALESCE(up.role,'Membro') AS role, COALESCE(up.city,'') AS city,
+    COALESCE(up.avatar,'👤') AS avatar, COALESCE(up.bio,'') AS bio`;
+
+  const profileStats = async (id) => {
+    const [events, connections, ratings] = await Promise.all([
+      one(`SELECT count(*)::int total FROM events WHERE author_id=$1`, [id]),
+      one(`SELECT count(*)::int total FROM user_connections WHERE user_id=$1`, [id]),
+      many(`SELECT stars FROM presentation_ratings WHERE speaker_id=$1`, [id]),
+    ]);
+    const totalRatings = ratings.length;
+    const rating = totalRatings
+      ? Number((ratings.reduce((sum, r) => sum + Number(r.stars || 0), 0) / totalRatings).toFixed(1))
+      : 0;
+    return {
+      events_count: Number(events?.total || 0),
+      connections: Number(connections?.total || 0),
+      rating,
+      ratings_count: totalRatings,
+    };
+  };
+
   const addHistory = async (userId, { type, title, subtitle = '' }) =>
     one(`INSERT INTO history(user_id,type,title,subtitle)
          VALUES($1,$2,$3,$4)
@@ -73,74 +100,61 @@ export function makeRepository(db) {
   };
 
   return {
-    async createUser({ name, email, passwordHash, avatar }) {
-      return one(`INSERT INTO users(name,email,password_hash,avatar) VALUES($1,$2,$3,$4)
-        RETURNING id,name,email,role,city,avatar,bio,created_at,updated_at`, [name, email, passwordHash, avatar || '👤']);
+    // Cadastro: cria a conta (users) e, em seguida, o perfil 1:1 (profiles).
+    async createUser({ name, email, passwordHash, avatar, role, city, bio }) {
+      const user = await one(`INSERT INTO users(name,email,password_hash) VALUES($1,$2,$3)
+        RETURNING id`, [name, email, passwordHash]);
+      await one(`INSERT INTO profiles(user_id,avatar,role,city,bio)
+        VALUES($1,$2,COALESCE($3,'Membro'),COALESCE($4,'São Paulo'),COALESCE($5,''))
+        ON CONFLICT (user_id) DO NOTHING RETURNING user_id`,
+        [user.id, avatar || '👤', role ?? null, city ?? null, bio ?? null]);
+      return one(`SELECT ${USER_COLUMNS} FROM users u LEFT JOIN profiles up ON up.user_id = u.id WHERE u.id=$1`, [user.id]);
     },
 
     async findUserByEmail(email) {
       return one(`SELECT * FROM users WHERE lower(email)=lower($1)`, [email]);
     },
 
-    async getUser(id) {
-      const user = await one(`SELECT id,name,email,role,city,address_number,avatar,bio,email_verified,created_at,updated_at FROM users WHERE id=$1`, [id]);
-      if (!user) return null;
-      const [events, connections, ratings] = await Promise.all([
-        one(`SELECT count(*)::int total FROM events WHERE author_id=$1`, [id]),
-        one(`SELECT count(*)::int total FROM user_connections WHERE user_id=$1`, [id]),
-        many(`SELECT stars FROM presentation_ratings WHERE speaker_id=$1`, [id]),
-      ]);
-      const ratingsList = ratings || [];
-      const totalRatings = ratingsList.length;
-      const avgRating = totalRatings > 0
-        ? Number((ratingsList.reduce((acc, r) => acc + Number(r.stars || 0), 0) / totalRatings).toFixed(1))
-        : 0;
+    async getProfile(userId) {
+      return one(`SELECT user_id,role,city,address_number,avatar,bio,created_at,updated_at FROM profiles WHERE user_id=$1`, [userId]);
+    },
 
-      return {
-        ...user,
-        events_count: Number(events?.total || 0),
-        connections: Number(connections?.total || 0),
-        rating: avgRating,
-        ratings_count: totalRatings,
-      };
+    async getUser(id) {
+      const user = await one(`SELECT ${USER_COLUMNS}
+        FROM users u LEFT JOIN profiles up ON up.user_id = u.id WHERE u.id=$1`, [id]);
+      if (!user) return null;
+      return { ...user, ...(await profileStats(id)) };
     },
 
     async getPublicUser(id) {
-      const user = await one(`SELECT id,name,role,city,avatar,bio,created_at FROM users WHERE id=$1`, [id]);
+      const user = await one(`SELECT ${PUBLIC_USER_COLUMNS}
+        FROM users u LEFT JOIN profiles up ON up.user_id = u.id WHERE u.id=$1`, [id]);
       if (!user) return null;
-      const [events, connections, ratings] = await Promise.all([
-        one(`SELECT count(*)::int total FROM events WHERE author_id=$1`, [id]),
-        one(`SELECT count(*)::int total FROM user_connections WHERE user_id=$1`, [id]),
-        many(`SELECT stars FROM presentation_ratings WHERE speaker_id=$1`, [id]),
-      ]);
-      const totalRatings = ratings.length;
-      const averageStars = totalRatings
-        ? Number((ratings.reduce((sum, x) => sum + Number(x.stars || 0), 0) / totalRatings).toFixed(1))
-        : 0;
-      return {
-        ...user,
-        events_count: Number(events?.total || 0),
-        connections: Number(connections?.total || 0),
-        rating: averageStars,
-        ratings_count: totalRatings,
-      };
+      return { ...user, ...(await profileStats(id)) };
     },
 
+    // Edita o perfil: o nome fica na conta; cargo, cidade, número, foto e biografia ficam no perfil.
     async updateUser(id, data) {
-      return one(`UPDATE users SET name=COALESCE($2,name), role=COALESCE($3,role),
-        city=COALESCE($4,city), address_number=COALESCE($5,address_number), avatar=COALESCE($6,avatar), bio=COALESCE($7,bio), updated_at=NOW()
-        WHERE id=$1 RETURNING id,name,email,role,city,address_number,avatar,bio,created_at,updated_at`,
-        [id, data.name ?? null, data.role ?? null, data.city ?? null, data.addressNumber ?? null, data.avatar ?? null, data.bio ?? null]);
+      await db.query(`UPDATE users SET name=COALESCE($2,name), updated_at=NOW() WHERE id=$1`, [id, data.name ?? null]);
+      await db.query(`INSERT INTO profiles(user_id,role,city,address_number,avatar,bio)
+        VALUES($1,COALESCE($2,'Membro'),COALESCE($3,'São Paulo'),COALESCE($4,''),COALESCE($5,'👤'),COALESCE($6,''))
+        ON CONFLICT(user_id) DO UPDATE SET
+          role=COALESCE($2,profiles.role), city=COALESCE($3,profiles.city),
+          address_number=COALESCE($4,profiles.address_number), avatar=COALESCE($5,profiles.avatar),
+          bio=COALESCE($6,profiles.bio), updated_at=NOW()`,
+        [id, data.role ?? null, data.city ?? null, data.addressNumber ?? null, data.avatar ?? null, data.bio ?? null]);
+      return one(`SELECT ${USER_COLUMNS} FROM users u LEFT JOIN profiles up ON up.user_id = u.id WHERE u.id=$1`, [id]);
     },
 
     async search(term, userId = null) {
       const q = `%${term}%`;
       const [users, posts] = await Promise.all([
-        many(`SELECT 'user'::varchar AS type,id,name AS title,role AS subtitle,avatar
-          FROM users WHERE name ILIKE $1 OR role ILIKE $1 ORDER BY name LIMIT 50`, [q]),
-        many(`SELECT 'post'::varchar AS type,p.id,p.content AS title,u.name AS subtitle,u.avatar,
+        many(`SELECT 'user'::varchar AS type,u.id,u.name AS title,up.role AS subtitle,up.avatar
+          FROM users u LEFT JOIN profiles up ON up.user_id = u.id
+          WHERE u.name ILIKE $1 OR up.role ILIKE $1 ORDER BY u.name LIMIT 50`, [q]),
+        many(`SELECT 'post'::varchar AS type,p.id,p.content AS title,u.name AS subtitle,up.avatar,
             p.author_id,p.visibility
-          FROM posts p JOIN users u ON u.id=p.author_id
+          FROM posts p JOIN users u ON u.id=p.author_id LEFT JOIN profiles up ON up.user_id = u.id
           WHERE p.content ILIKE $1 ORDER BY p.created_at DESC LIMIT 100`, [q]),
       ]);
       const connected = new Set((await many(`SELECT connected_user_id FROM user_connections WHERE user_id=$1`, [userId])).map(r => r.connected_user_id));
@@ -154,12 +168,12 @@ export function makeRepository(db) {
       return many(`SELECT c.id,
         CASE
           WHEN (SELECT count(*) FROM chat_members WHERE chat_id=c.id) = 2 THEN
-            COALESCE((SELECT u.name FROM chat_members cm2 JOIN users u ON u.id=cm2.user_id WHERE cm2.chat_id=c.id AND cm2.user_id <> $1 LIMIT 1), c.name)
+            COALESCE((SELECT u.name FROM chat_members cm2 JOIN users u ON u.id=cm2.user_id LEFT JOIN profiles up ON up.user_id = u.id WHERE cm2.chat_id=c.id AND cm2.user_id <> $1 LIMIT 1), c.name)
           ELSE c.name
         END AS name,
         CASE
           WHEN (SELECT count(*) FROM chat_members WHERE chat_id=c.id) = 2 THEN
-            COALESCE((SELECT u.avatar FROM chat_members cm2 JOIN users u ON u.id=cm2.user_id WHERE cm2.chat_id=c.id AND cm2.user_id <> $1 LIMIT 1), '👤')
+            COALESCE((SELECT up.avatar FROM chat_members cm2 JOIN users u ON u.id=cm2.user_id LEFT JOIN profiles up ON up.user_id = u.id WHERE cm2.chat_id=c.id AND cm2.user_id <> $1 LIMIT 1), '👤')
           ELSE '💬'
         END AS avatar,
         c.preview,
@@ -173,7 +187,7 @@ export function makeRepository(db) {
       if (userId === recipientId) {
         throw new Error('Não é possível criar um chat consigo mesmo.');
       }
-      const recipient = await one(`SELECT id,name,avatar FROM users WHERE id=$1`, [recipientId]);
+      const recipient = await one(`SELECT u.id,u.name,COALESCE(up.avatar,'👤') AS avatar FROM users u LEFT JOIN profiles up ON up.user_id = u.id WHERE u.id=$1`, [recipientId]);
       if (!recipient) throw new Error('Usuário destinatário não encontrado.');
 
       // Check if a direct chat between these two users already exists
@@ -221,9 +235,9 @@ export function makeRepository(db) {
 
       return many(`
         SELECT m.id, m.chat_id, m.sender_id, m.content, m.created_at,
-          u.name AS sender_name, u.avatar AS sender_avatar
+          u.name AS sender_name, up.avatar AS sender_avatar
         FROM chat_messages m
-        JOIN users u ON u.id = m.sender_id
+        JOIN users u ON u.id = m.sender_id LEFT JOIN profiles up ON up.user_id = u.id
         WHERE m.chat_id = $1
         ORDER BY m.created_at ASC
         LIMIT 200
@@ -238,7 +252,7 @@ export function makeRepository(db) {
         throw err;
       }
 
-      const sender = await one(`SELECT id,name,avatar FROM users WHERE id=$1`, [senderId]);
+      const sender = await one(`SELECT u.id,u.name,COALESCE(up.avatar,'👤') AS avatar FROM users u LEFT JOIN profiles up ON up.user_id = u.id WHERE u.id=$1`, [senderId]);
 
       const msg = await one(`
         INSERT INTO chat_messages(chat_id, sender_id, content)
@@ -287,9 +301,9 @@ export function makeRepository(db) {
       }
       return many(`
         SELECT c.id, c.post_id, c.event_id, c.content, c.created_at,
-          u.id AS user_id, u.name AS user_name, u.avatar AS user_avatar, u.role AS user_role
+          u.id AS user_id, u.name AS user_name, up.avatar AS user_avatar, up.role AS user_role
         FROM post_comments c
-        JOIN users u ON u.id = c.user_id
+        JOIN users u ON u.id = c.user_id LEFT JOIN profiles up ON up.user_id = u.id
         WHERE c.post_id = $1 OR c.event_id = $1
         ORDER BY c.created_at ASC
         LIMIT 200
@@ -305,7 +319,7 @@ export function makeRepository(db) {
         error.code = 'FORBIDDEN';
         throw error;
       }
-      const user = await one(`SELECT id, name, avatar, role FROM users WHERE id=$1`, [userId]);
+      const user = await one(`SELECT u.id,u.name,COALESCE(up.avatar,'👤') AS avatar,COALESCE(up.role,'Membro') AS role FROM users u LEFT JOIN profiles up ON up.user_id = u.id WHERE u.id=$1`, [userId]);
       const comment = await one(`
         INSERT INTO post_comments(post_id, event_id, user_id, content)
         VALUES($1, $2, $3, $4)
@@ -334,11 +348,11 @@ export function makeRepository(db) {
     // --- FEED & POSTS ---
     async listPosts(limit = 50) {
       const rows = await many(`SELECT p.id,p.content,p.image,p.likes,p.created_at,p.type,p.title,p.presentation_id,p.mentioned_event_id,
-        u.id author_id, u.name author_name, u.avatar author_avatar,
+        u.id author_id, u.name author_name, up.avatar author_avatar,
         COALESCE(c.comments_count, 0)::int AS comments_count,
         e.title AS mentioned_event_title, e.event_date AS mentioned_event_date, e.event_time AS mentioned_event_time, e.location AS mentioned_event_location
         FROM posts p
-        JOIN users u ON u.id=p.author_id
+        JOIN users u ON u.id=p.author_id LEFT JOIN profiles up ON up.user_id = u.id
         LEFT JOIN (SELECT post_id, count(*)::int AS comments_count FROM post_comments GROUP BY post_id) c ON c.post_id=p.id
         LEFT JOIN events e ON e.id=p.mentioned_event_id
         ORDER BY p.created_at DESC LIMIT $1`, [limit]);
@@ -397,11 +411,11 @@ export function makeRepository(db) {
       }
 
       const posts = await many(`SELECT p.id,p.content,p.image,p.likes,p.created_at,p.type,p.title,p.presentation_id,p.event_date,p.event_time,p.event_end_time,p.mentioned_event_id,p.visibility,p.share_token,
-        u.id author_id, u.name author_name, u.avatar author_avatar,
+        u.id author_id, u.name author_name, up.avatar author_avatar,
         COALESCE(c.comments_count, 0)::int AS comments_count,
         e.title AS mentioned_event_title, e.event_date AS mentioned_event_date, e.event_time AS mentioned_event_time, e.location AS mentioned_event_location
         FROM posts p
-        JOIN users u ON u.id=p.author_id
+        JOIN users u ON u.id=p.author_id LEFT JOIN profiles up ON up.user_id = u.id
         LEFT JOIN (SELECT post_id, count(*)::int AS comments_count FROM post_comments GROUP BY post_id) c ON c.post_id=p.id
         LEFT JOIN events e ON e.id=p.mentioned_event_id
         ORDER BY p.created_at DESC LIMIT $1`, [limit]);
@@ -448,8 +462,8 @@ export function makeRepository(db) {
       // Fetch speakers for any presentations in feed
       const presIds = formattedPosts.filter((p) => p.presentation_id).map((p) => p.presentation_id);
       if (presIds.length > 0) {
-        const speakers = await many(`SELECT ps.presentation_id, s.id, s.name, s.avatar
-          FROM presentation_speakers ps JOIN users s ON s.id=ps.speaker_id
+        const speakers = await many(`SELECT ps.presentation_id, s.id, s.name, sp.avatar
+          FROM presentation_speakers ps JOIN users s ON s.id=ps.speaker_id LEFT JOIN profiles sp ON sp.user_id = s.id
           WHERE ps.presentation_id = ANY($1) ORDER BY s.name`, [presIds]);
         const speakersByPres = {};
         speakers.forEach((s) => {
@@ -466,11 +480,11 @@ export function makeRepository(db) {
       const [events, partCounts] = await Promise.all([
         many(`SELECT e.id,e.title,e.description AS content,e.image,e.created_at,
           'event'::varchar AS type,''::varchar AS presentation_id,
-          u.id author_id, u.name author_name, u.avatar author_avatar,
+          u.id author_id, u.name author_name, up.avatar author_avatar,
           e.event_date,e.event_time,e.event_end_time,e.location,e.visibility,e.share_token,
           COALESCE(c.comments_count, 0)::int AS comments_count,
           COALESCE(l.likes_count, 0)::int AS likes_count
-        FROM events e JOIN users u ON u.id=e.author_id
+        FROM events e JOIN users u ON u.id=e.author_id LEFT JOIN profiles up ON up.user_id = u.id
         LEFT JOIN (SELECT event_id, count(*)::int AS comments_count FROM post_comments GROUP BY event_id) c ON c.event_id=e.id
         LEFT JOIN (SELECT event_id, count(*)::int AS likes_count FROM event_likes GROUP BY event_id) l ON l.event_id=e.id
         ORDER BY e.created_at DESC LIMIT $1`, [limit]),
@@ -577,18 +591,18 @@ export function makeRepository(db) {
 
     async getPostById(id) {
       const p = await one(`SELECT p.id,p.content,p.image,p.likes,p.created_at,p.type,p.title,p.presentation_id,p.event_date,p.event_time,p.event_end_time,p.mentioned_event_id,p.visibility,p.share_token,
-        u.id author_id, u.name author_name, u.avatar author_avatar,
+        u.id author_id, u.name author_name, up.avatar author_avatar,
         COALESCE(c.comments_count, 0)::int AS comments_count,
         e.title AS mentioned_event_title, e.event_date AS mentioned_event_date, e.event_time AS mentioned_event_time, e.location AS mentioned_event_location
         FROM posts p
-        JOIN users u ON u.id=p.author_id
+        JOIN users u ON u.id=p.author_id LEFT JOIN profiles up ON up.user_id = u.id
         LEFT JOIN (SELECT post_id, count(*)::int AS comments_count FROM post_comments GROUP BY post_id) c ON c.post_id=p.id
         LEFT JOIN events e ON e.id=p.mentioned_event_id
         WHERE p.id=$1`, [id]);
       if (!p) return null;
       let speakers = [];
       if (p.presentation_id) {
-        speakers = await many(`SELECT s.id,s.name,s.avatar FROM presentation_speakers ps JOIN users s ON s.id=ps.speaker_id WHERE ps.presentation_id=$1 ORDER BY s.name`, [p.presentation_id]);
+        speakers = await many(`SELECT s.id,s.name,sp.avatar FROM presentation_speakers ps JOIN users s ON s.id=ps.speaker_id LEFT JOIN profiles sp ON sp.user_id = s.id WHERE ps.presentation_id=$1 ORDER BY s.name`, [p.presentation_id]);
       }
       return {
         id: p.id,
@@ -692,21 +706,21 @@ export function makeRepository(db) {
     async listSaved(userId) {
       return many(`
         SELECT 'post'::varchar AS type, p.id, p.content, p.image, p.likes, p.created_at, p.title,
-          u.name AS author_name, u.avatar AS author_avatar, s.created_at AS saved_at,
+          u.name AS author_name, up.avatar AS author_avatar, s.created_at AS saved_at,
           NULL::date AS event_date, NULL::time AS event_time, ''::varchar AS location
         FROM saved_posts s
         JOIN posts p ON p.id=s.post_id
-        JOIN users u ON u.id=p.author_id
+        JOIN users u ON u.id=p.author_id LEFT JOIN profiles up ON up.user_id = u.id
         WHERE s.user_id=$1
 
         UNION ALL
 
         SELECT 'event'::varchar AS type, e.id, e.description AS content, e.image, 0 AS likes, e.created_at, e.title,
-          u.name AS author_name, u.avatar AS author_avatar, se.created_at AS saved_at,
+          u.name AS author_name, up.avatar AS author_avatar, se.created_at AS saved_at,
           e.event_date, e.event_time, e.location
         FROM saved_events se
         JOIN events e ON e.id=se.event_id
-        JOIN users u ON u.id=e.author_id
+        JOIN users u ON u.id=e.author_id LEFT JOIN profiles up ON up.user_id = u.id
         WHERE se.user_id=$1
 
         ORDER BY saved_at DESC
@@ -728,7 +742,7 @@ export function makeRepository(db) {
 
     async listFavorites(userId) {
       return many(`SELECT p.id,p.content,p.image,p.likes,p.created_at,p.title,p.type,u.name author_name
-        FROM favorites f JOIN posts p ON p.id=f.post_id JOIN users u ON u.id=p.author_id
+        FROM favorites f JOIN posts p ON p.id=f.post_id JOIN users u ON u.id=p.author_id LEFT JOIN profiles up ON up.user_id = u.id
         WHERE f.user_id=$1 ORDER BY f.created_at DESC`, [userId]);
     },
 
@@ -772,9 +786,9 @@ export function makeRepository(db) {
     async listEventParticipants(eventId, userId = null) {
       if (!(await canView('event', eventId, userId))) { const error = new Error('Você não tem permissão para acessar os participantes.'); error.code = 'FORBIDDEN'; throw error; }
       return many(`
-        SELECT u.id, u.name, u.avatar, u.role, ep.status, ep.created_at
+        SELECT u.id, u.name, up.avatar, up.role, ep.status, ep.created_at
         FROM event_participants ep
-        JOIN users u ON u.id = ep.user_id
+        JOIN users u ON u.id = ep.user_id LEFT JOIN profiles up ON up.user_id = u.id
         WHERE ep.event_id = $1
         ORDER BY ep.created_at ASC
       `, [eventId]);
@@ -843,7 +857,7 @@ export function makeRepository(db) {
 
     async getEventRatingSummary(eventId) {
       const allRatings = await many(`SELECT er.stars, er.comment, er.visibility, er.created_at, u.name AS rater_name
-        FROM event_ratings er JOIN users u ON u.id=er.rater_id
+        FROM event_ratings er JOIN users u ON u.id=er.rater_id LEFT JOIN profiles up ON up.user_id = u.id
         WHERE er.event_id=$1 ORDER BY er.created_at DESC`, [eventId]);
       const totalRatings = allRatings.length;
       const averageStars = totalRatings ? Number((allRatings.reduce((sum, r) => sum + Number(r.stars || 0), 0) / totalRatings).toFixed(1)) : 0;
@@ -971,9 +985,9 @@ export function makeRepository(db) {
     async getEventById(eventId, userId = null, shareToken = null) {
       const ev = await one(`
         SELECT e.id, e.title, e.description, e.image, e.event_date, e.event_time, e.event_end_time, e.location, e.visibility, e.share_token, e.created_at,
-          u.id AS author_id, u.name AS author_name, u.avatar AS author_avatar, u.role AS author_role
+          u.id AS author_id, u.name AS author_name, up.avatar AS author_avatar, up.role AS author_role
         FROM events e
-        JOIN users u ON u.id = e.author_id
+        JOIN users u ON u.id = e.author_id LEFT JOIN profiles up ON up.user_id = u.id
         WHERE e.id = $1
       `, [eventId]);
       if (!ev) return null;
@@ -981,7 +995,7 @@ export function makeRepository(db) {
 
       const [partCount, participants, commentsCount, isPart, isSaved] = await Promise.all([
         one(`SELECT count(*)::int AS count FROM event_participants WHERE event_id=$1`, [eventId]),
-        many(`SELECT u.id, u.name, u.avatar, u.role, ep.status FROM event_participants ep JOIN users u ON u.id=ep.user_id WHERE ep.event_id=$1 ORDER BY ep.created_at ASC`, [eventId]),
+        many(`SELECT u.id, u.name, up.avatar, up.role, ep.status FROM event_participants ep JOIN users u ON u.id=ep.user_id LEFT JOIN profiles up ON up.user_id = u.id WHERE ep.event_id=$1 ORDER BY ep.created_at ASC`, [eventId]),
         one(`SELECT count(*)::int AS count FROM post_comments WHERE event_id=$1`, [eventId]),
         userId ? one(`SELECT 1 FROM event_participants WHERE event_id=$1 AND user_id=$2`, [eventId, userId]) : null,
         userId ? one(`SELECT 1 FROM saved_events WHERE event_id=$1 AND user_id=$2`, [eventId, userId]) : null,
@@ -1020,13 +1034,13 @@ export function makeRepository(db) {
       return many(`
         SELECT * FROM (
           SELECT e.id,e.title,e.description AS content,e.image,e.event_date,e.event_time,e.event_end_time,e.location,e.created_at,
-            'event'::varchar AS type,u.id AS author_id,u.name AS author_name,u.avatar AS author_avatar
-          FROM events e JOIN users u ON u.id=e.author_id
+            'event'::varchar AS type,u.id AS author_id,u.name AS author_name,up.avatar AS author_avatar
+          FROM events e JOIN users u ON u.id=e.author_id LEFT JOIN profiles up ON up.user_id = u.id
           WHERE e.author_id=$1 OR EXISTS (SELECT 1 FROM event_participants ep WHERE ep.event_id=e.id AND ep.user_id=$1)
           UNION ALL
           SELECT p.id,p.title,p.content,p.image,p.event_date,p.event_time,p.event_end_time,''::varchar AS location,p.created_at,
-            'presentation'::varchar AS type,u.id AS author_id,u.name AS author_name,u.avatar AS author_avatar
-          FROM posts p JOIN users u ON u.id=p.author_id
+            'presentation'::varchar AS type,u.id AS author_id,u.name AS author_name,up.avatar AS author_avatar
+          FROM posts p JOIN users u ON u.id=p.author_id LEFT JOIN profiles up ON up.user_id = u.id
           WHERE (p.type='presentation' OR p.presentation_id IS NOT NULL)
             AND (p.author_id=$1 OR EXISTS (SELECT 1 FROM event_participants ep WHERE ep.event_id=p.mentioned_event_id AND ep.user_id=$1))
         ) items
@@ -1037,11 +1051,11 @@ export function makeRepository(db) {
 
     async listEvents(userId) {
       return many(`SELECT e.id,e.title,e.description,e.image,e.event_date,e.event_time,e.event_end_time,e.location,e.visibility,e.share_token,e.created_at,
-        u.id author_id,u.name author_name,u.avatar author_avatar,
+        u.id author_id,u.name author_name,up.avatar author_avatar,
         COALESCE(ep.participants_count, 0)::int AS participants_count,
         COALESCE(c.comments_count, 0)::int AS comments_count
         FROM events e
-        JOIN users u ON u.id=e.author_id
+        JOIN users u ON u.id=e.author_id LEFT JOIN profiles up ON up.user_id = u.id
         LEFT JOIN (SELECT event_id, count(*)::int AS participants_count FROM event_participants GROUP BY event_id) ep ON ep.event_id=e.id
         LEFT JOIN (SELECT event_id, count(*)::int AS comments_count FROM post_comments GROUP BY event_id) c ON c.event_id=e.id
         WHERE e.author_id=$1 ORDER BY COALESCE(e.event_date,e.created_at::date) DESC,e.created_at DESC`, [userId]);
@@ -1088,9 +1102,9 @@ export function makeRepository(db) {
 
     async listConnections(userId) {
       return many(`
-        SELECT u.id, u.name, u.avatar, u.role, u.city, uc.created_at AS connected_at
+        SELECT u.id, u.name, up.avatar, up.role, up.city, uc.created_at AS connected_at
         FROM user_connections uc
-        JOIN users u ON u.id = uc.connected_user_id
+        JOIN users u ON u.id = uc.connected_user_id LEFT JOIN profiles up ON up.user_id = u.id
         WHERE uc.user_id = $1
         ORDER BY uc.created_at DESC
       `, [userId]);
@@ -1098,9 +1112,9 @@ export function makeRepository(db) {
 
     async listFollowers(userId) {
       return many(`
-        SELECT u.id, u.name, u.avatar, u.role, u.city, uc.created_at AS followed_at
+        SELECT u.id, u.name, up.avatar, up.role, up.city, uc.created_at AS followed_at
         FROM user_connections uc
-        JOIN users u ON u.id = uc.user_id
+        JOIN users u ON u.id = uc.user_id LEFT JOIN profiles up ON up.user_id = u.id
         WHERE uc.connected_user_id = $1
         ORDER BY uc.created_at DESC
       `, [userId]);
@@ -1111,10 +1125,10 @@ export function makeRepository(db) {
       const presentations = await many(`
         SELECT p.id AS post_id, p.presentation_id, p.title, p.content, p.created_at,
           p.event_date, p.event_end_time, p.mentioned_event_id,
-          u.id AS author_id, u.name AS author_name, u.avatar AS author_avatar,
+          u.id AS author_id, u.name AS author_name, up.avatar AS author_avatar,
           'presentation' AS type
         FROM posts p
-        JOIN users u ON u.id=p.author_id
+        JOIN users u ON u.id=p.author_id LEFT JOIN profiles up ON up.user_id = u.id
         WHERE (p.type='presentation' OR p.presentation_id IS NOT NULL)
           AND p.event_date IS NOT NULL AND p.event_end_time IS NOT NULL
         ORDER BY p.created_at DESC
@@ -1136,8 +1150,8 @@ export function makeRepository(db) {
       const presIds = formattedPresentations.map((p) => p.presentationId);
       if (presIds.length > 0) {
         const speakers = await many(`
-          SELECT ps.presentation_id, s.id, s.name, s.avatar
-          FROM presentation_speakers ps JOIN users s ON s.id=ps.speaker_id
+          SELECT ps.presentation_id, s.id, s.name, sp.avatar
+          FROM presentation_speakers ps JOIN users s ON s.id=ps.speaker_id LEFT JOIN profiles sp ON sp.user_id = s.id
           WHERE ps.presentation_id = ANY($1) ORDER BY s.name
         `, [presIds]);
         const map = {};
@@ -1154,10 +1168,10 @@ export function makeRepository(db) {
 
       const events = await many(`
         SELECT e.id AS post_id, ('presentation-event-' || e.id) AS presentation_id, e.title, e.description AS content, e.created_at,
-          u.id AS author_id, u.name AS author_name, u.avatar AS author_avatar,
+          u.id AS author_id, u.name AS author_name, up.avatar AS author_avatar,
           'event' AS type
         FROM events e
-        JOIN users u ON u.id=e.author_id
+        JOIN users u ON u.id=e.author_id LEFT JOIN profiles up ON up.user_id = u.id
         ORDER BY e.created_at DESC
         LIMIT 50
       `);
@@ -1296,7 +1310,7 @@ export function makeRepository(db) {
         p.title AS presentation_title, CASE WHEN pr.visibility='anonymous' THEN 'Anônimo' ELSE u.name END AS rater_name
         FROM presentation_ratings pr
         LEFT JOIN posts p ON p.id=pr.post_id
-        JOIN users u ON u.id=pr.rater_id
+        JOIN users u ON u.id=pr.rater_id LEFT JOIN profiles up ON up.user_id = u.id
         WHERE pr.speaker_id=$1 ORDER BY pr.created_at DESC LIMIT 5`, [speakerId]);
 
       return {
