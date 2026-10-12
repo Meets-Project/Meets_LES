@@ -18,6 +18,7 @@ export function SpeakerProfileScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [profileUser, setProfileUser] = useState(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -26,12 +27,14 @@ export function SpeakerProfileScreen() {
       async function loadData() {
         setIsLoading(true);
         try {
-          const [result, connStatus] = await Promise.all([
+          const [result, connStatus, publicUser] = await Promise.all([
             getPublicSpeakerRatingSummary(speakerId),
             speakerId ? getConnectionStatus(speakerId) : { connected: false },
+            speakerId ? getPublicUser(speakerId).catch(() => null) : null,
           ]);
           if (!isActive) return;
           setSummary(result);
+          setProfileUser(publicUser);
           setIsConnected(Boolean(connStatus?.connected));
         } catch (e) {
           console.error('Erro ao carregar dados do apresentador:', e);
