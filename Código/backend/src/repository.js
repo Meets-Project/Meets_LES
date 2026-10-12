@@ -960,12 +960,6 @@ export function makeRepository(db) {
         await db.query(`INSERT INTO event_participants(event_id, user_id, status) VALUES($1, $2, 'host') ON CONFLICT DO NOTHING`, [event.id, userId]);
         return event;
       }
-      if (mode === 'live') {
-        const visibility = normalizeVisibility(data.visibility);
-        return one(`INSERT INTO live_rooms(author_id,title,description,visibility,share_token)
-          VALUES($1,$2,$3,$4,$5) RETURNING id,title,description,visibility,share_token,created_at`,
-          [userId, data.title, data.description || '', visibility, crypto.randomUUID()]);
-      }
       if (mode === 'post') {
         return this.createPost(userId, {
           title: data.title,

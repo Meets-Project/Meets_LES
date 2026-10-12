@@ -52,3 +52,14 @@ describe('Compartilhamentos', () => {
     expect(res.status).toBe(403);
   });
 });
+
+describe('Salas ao vivo removidas', () => {
+  it('a API não aceita mais criar sala ao vivo e a tabela não existe', async () => {
+    const { app, db } = await createTestApp();
+    const { token } = await signup(app);
+    const res = await request(app).post('/content').set(auth(token)).send({ mode: 'live', title: 'Sala' });
+    expect(res.status).toBe(400);
+    const table = await db.query(`SELECT to_regclass('live_rooms') AS t`);
+    expect(table.rows[0].t).toBeNull();
+  });
+});

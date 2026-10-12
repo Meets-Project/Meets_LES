@@ -578,7 +578,7 @@ export function createApp({ query = defaultQuery } = {}) {
   app.post('/content', requireAuth, async (req, res, next) => {
     try {
       const raw = z.object({
-        mode: z.enum(['event', 'live', 'post', 'presentation']),
+        mode: z.enum(['event', 'post', 'presentation']),
         title: z.string().trim().min(1).max(160),
         description: z.string().max(5000).optional(),
         image: z.string().max(15000000).optional(),
@@ -611,7 +611,7 @@ export function createApp({ query = defaultQuery } = {}) {
       const item = await repo.createContent(req.auth.sub, payload.mode, payload);
       await repo.addHistory(req.auth.sub, {
         type: payload.mode,
-        title: payload.mode === 'event' ? 'Criou um evento' : payload.mode === 'live' ? 'Abriu uma sala ao vivo' : 'Criou conteúdo',
+        title: payload.mode === 'event' ? 'Criou um evento' : 'Criou conteúdo',
         subtitle: payload.title,
       });
       res.status(201).json({ data: item });
