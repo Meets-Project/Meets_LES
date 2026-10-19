@@ -1,0 +1,70 @@
+// MER conceitual do Meets (notação de Chen). Gerar: dot -Tpng -Gdpi=150 mer-conceitual.dot -o mer-conceitual.png
+graph MER {
+  graph [layout=neato, overlap=false, splines=true, sep="+22", esep="+8", fontname="Arial", label="MER conceitual — Meets", labelloc=t, fontsize=22, pad=0.4];
+  node [fontname="Arial", fontsize=12];
+  edge [fontname="Arial", fontsize=11, len=1.6];
+
+  // Entidades
+  node [shape=box, style="filled", fillcolor="#eeeeee", penwidth=1.5];
+  USUARIO [label="USUÁRIO"]; PERFIL [label="PERFIL"]; POST [label="POST"]; APRES [label="APRESENTAÇÃO"];
+  EVENTO [label="EVENTO"]; COMENT [label="COMENTÁRIO"]; DENUNCIA [label="DENÚNCIA"]; NOTIF [label="NOTIFICAÇÃO"];
+  CONVERSA [label="CONVERSA"]; MSG [label="MENSAGEM"]; ACAO [label="AÇÃO ADMINISTRATIVA"]; CONFIG [label="CONFIGURAÇÃO"];
+
+  // Relacionamentos
+  node [shape=diamond, style="filled", fillcolor="#ffffff", penwidth=1.2, fontsize=11];
+  r_possui [label="possui"]; r_define [label="define"]; r_publica [label="publica"]; r_organiza [label="organiza"];
+  r_segue [label="segue"]; r_curte_p [label="curte"]; r_curte_e [label="curte"]; r_salva [label="salva/\nfavorita"];
+  r_participa [label="participa"]; r_escreve [label="escreve"]; r_comenta_em [label="sobre"];
+  r_compart [label="compartilha"]; r_acontece [label="acontece\nem"]; r_apresenta [label="apresenta"];
+  r_aval_e [label="avalia"]; r_aval_a [label="avalia"]; r_denuncia [label="denuncia"]; r_analisa [label="analisa"];
+  r_recebe [label="recebe"]; r_conversa [label="participa"]; r_contem [label="contém"]; r_realiza [label="realiza"];
+  r_eh [label="é um", shape=triangle];
+
+  // Atributos (chave sublinhada)
+  node [shape=ellipse, style="", penwidth=1, fontsize=10];
+  a_u_id [label=<<u>id</u>>]; a_u_nome [label="nome"]; a_u_email [label="e-mail"]; a_u_tipo [label="tipo"]; a_u_sit [label="situação"];
+  a_p_cargo [label="cargo"]; a_p_foto [label="foto"]; a_p_bio [label="biografia"];
+  a_po_id [label=<<u>id</u>>]; a_po_txt [label="conteúdo"]; a_po_vis [label="visibilidade"];
+  a_ap_ini [label="início"]; a_ap_fim [label="fim"];
+  a_e_id [label=<<u>id</u>>]; a_e_tit [label="título"]; a_e_data [label="data"]; a_e_local [label="local"]; a_e_fim [label="horário de fim"];
+  a_pa_sit [label="situação\n(host/confirmada)"];
+  a_ae_est [label="estrelas"]; a_aa_est [label="estrelas"]; a_aa_atr [label="atributos (6)", peripheries=2];
+  a_d_id [label=<<u>id</u>>]; a_d_mot [label="motivo"]; a_d_sit [label="situação"]; a_d_acao [label="ação"];
+  a_ac_acao [label="ação"]; a_ac_data [label="data"];
+
+  // Ligações entidade—relacionamento (cardinalidades)
+  USUARIO -- r_possui [label="1"]; r_possui -- PERFIL [label="1"];
+  USUARIO -- r_define [label="1"]; r_define -- CONFIG [label="1"];
+  USUARIO -- r_publica [label="1"]; r_publica -- POST [label="N"];
+  USUARIO -- r_organiza [label="1"]; r_organiza -- EVENTO [label="N"];
+  USUARIO -- r_segue [label="N"]; r_segue -- USUARIO [label="N"];
+  USUARIO -- r_curte_p [label="N"]; r_curte_p -- POST [label="N"];
+  USUARIO -- r_curte_e [label="N"]; r_curte_e -- EVENTO [label="N"];
+  USUARIO -- r_salva [label="N"]; r_salva -- POST [label="N"];
+  USUARIO -- r_participa [label="N"]; r_participa -- EVENTO [label="N"];
+  USUARIO -- r_escreve [label="1"]; r_escreve -- COMENT [label="N"];
+  COMENT -- r_comenta_em [label="N"]; r_comenta_em -- POST [label="0..1"]; r_comenta_em -- EVENTO [label="0..1"];
+  USUARIO -- r_compart [label="N"]; r_compart -- POST [label="N"];
+  APRES -- r_eh; r_eh -- POST;
+  APRES -- r_acontece [label="N"]; r_acontece -- EVENTO [label="0..1"];
+  USUARIO -- r_apresenta [label="N"]; r_apresenta -- APRES [label="N"];
+  USUARIO -- r_aval_e [label="N"]; r_aval_e -- EVENTO [label="N"];
+  USUARIO -- r_aval_a [label="N"]; r_aval_a -- APRES [label="N"];
+  USUARIO -- r_denuncia [label="1"]; r_denuncia -- DENUNCIA [label="N"];
+  USUARIO -- r_analisa [label="0..1 (admin)"]; r_analisa -- DENUNCIA [label="N"];
+  USUARIO -- r_recebe [label="1"]; r_recebe -- NOTIF [label="N"];
+  USUARIO -- r_conversa [label="2"]; r_conversa -- CONVERSA [label="N"];
+  CONVERSA -- r_contem [label="1"]; r_contem -- MSG [label="N"];
+  USUARIO -- r_realiza [label="1 (admin)"]; r_realiza -- ACAO [label="N"];
+
+  // Atributos
+  USUARIO -- a_u_id; USUARIO -- a_u_nome; USUARIO -- a_u_email; USUARIO -- a_u_tipo; USUARIO -- a_u_sit;
+  PERFIL -- a_p_cargo; PERFIL -- a_p_foto; PERFIL -- a_p_bio;
+  POST -- a_po_id; POST -- a_po_txt; POST -- a_po_vis;
+  APRES -- a_ap_ini; APRES -- a_ap_fim;
+  EVENTO -- a_e_id; EVENTO -- a_e_tit; EVENTO -- a_e_data; EVENTO -- a_e_local; EVENTO -- a_e_fim;
+  r_participa -- a_pa_sit;
+  r_aval_e -- a_ae_est; r_aval_a -- a_aa_est; r_aval_a -- a_aa_atr;
+  DENUNCIA -- a_d_id; DENUNCIA -- a_d_mot; DENUNCIA -- a_d_sit; DENUNCIA -- a_d_acao;
+  ACAO -- a_ac_acao; ACAO -- a_ac_data;
+}

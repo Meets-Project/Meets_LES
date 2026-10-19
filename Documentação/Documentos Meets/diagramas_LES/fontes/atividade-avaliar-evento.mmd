@@ -1,0 +1,29 @@
+---
+title: Diagrama de atividade — Avaliar Evento (#005)
+---
+flowchart TB
+  ini((Início))
+  a1[Usuário abre a avaliação pelo lembrete, pelo card do evento no feed ou pelo calendário]
+  d1{Participou do evento?}
+  d2{O evento já terminou no horário de Brasília?}
+  e1[Informa que só quem participou pode avaliar depois do término]
+  a2[Exibe 1 a 5 estrelas, comentário opcional e opção pública ou anônima]
+  a3[Usuário escolhe a nota, escreve o comentário e confirma]
+  d3{Nota entre 1 e 5?}
+  e2[Pede para escolher a nota]
+  d4{Já havia avaliado?}
+  a4[Atualiza a avaliação anterior]
+  a5[Registra a nova avaliação]
+  a6[Recalcula a média do evento]
+  a7[Exibe a confirmação e a média atualizada]
+  fim((Fim))
+  ini --> a1 --> d1
+  d1 -- não --> e1 --> fim
+  d1 -- sim --> d2
+  d2 -- não --> e1
+  d2 -- sim --> a2 --> a3 --> d3
+  d3 -- não --> e2 --> a3
+  d3 -- sim --> d4
+  d4 -- sim --> a4 --> a6
+  d4 -- não --> a5 --> a6
+  a6 --> a7 --> fim

@@ -1,0 +1,53 @@
+---
+title: Diagrama de classe — Avaliação de Apresentador e Ranking
+---
+classDiagram
+  direction LR
+  class Usuario {
+    +UUID id
+    +String nome
+  }
+  class Apresentacao {
+    +String idApresentacao
+    +terminou() Boolean
+  }
+  class AvaliacaoApresentador {
+    +Integer estrelas  «1 a 5»
+    +Integer clareza  «0 a 99»
+    +Integer dominioConteudo
+    +Integer engajamento
+    +Integer storytelling
+    +Integer gestaoTempo
+    +Integer recursosVisuais
+    +String comentario
+    +String visibilidade  «pública | anônima»
+    +validarNotas()
+    +registrar()
+    +editar()
+  }
+  class PontuacaoApresentador {
+    +Integer pontuacaoGeral  «0 a 99»
+    +Float mediaEstrelas
+    +Integer totalAvaliacoes
+    +Map mediaPorAtributo
+    +calcular(avaliacoes)
+  }
+  class Ranking {
+    +Date inicioPeriodo
+    +calcular()
+    +ordenar()
+  }
+  class LembreteAvaliacao {
+    +String tipoAlvo  «evento | apresentação»
+    +verificarTerminados()
+    +notificarParticipantes()
+  }
+  Usuario "1..*" -- "0..*" Apresentacao : apresenta
+  Usuario "1" --> "0..*" AvaliacaoApresentador : avalia
+  Usuario "1" <-- "0..*" AvaliacaoApresentador : é avaliado
+  Apresentacao "1" <-- "0..*" AvaliacaoApresentador : refere-se a
+  Usuario "1" -- "0..1" PontuacaoApresentador : tem
+  PontuacaoApresentador ..> AvaliacaoApresentador : calcula a partir de
+  Ranking "1" o-- "0..*" PontuacaoApresentador : classifica
+  LembreteAvaliacao ..> Apresentacao : verifica término
+  LembreteAvaliacao ..> Usuario : notifica participantes

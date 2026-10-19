@@ -1,0 +1,22 @@
+---
+title: Estado do Evento
+---
+stateDiagram-v2
+  direction TB
+  [*] --> Agendado : criar (data, início, fim e local)
+  Agendado --> Agendado : editar / confirmar ou cancelar presença
+  Agendado --> EmAndamento : chega o horário de início
+  EmAndamento : Em andamento
+  EmAndamento --> Encerrado : passa o horário de fim
+  Encerrado --> Encerrado : participantes avaliam o evento e quem apresentou
+  Agendado --> Excluido : autor exclui
+  Agendado --> Removido : administrador remove
+  Encerrado --> Removido : administrador remove
+  Excluido : Excluído
+  Removido : Removido pela moderação
+  Excluido --> [*]
+  Removido --> [*]
+  note right of Encerrado
+    Ao encerrar, o sistema envia o lembrete
+    de avaliação aos participantes (a cada minuto).
+  end note

@@ -1,0 +1,45 @@
+---
+title: Diagrama de sequência — Avaliar Evento (#005)
+---
+sequenceDiagram
+  actor U as Usuário
+  participant T@{ "type": "boundary" } as EventRatingScreen (app)
+  participant C@{ "type": "control" } as API POST /ratings/events
+  participant R@{ "type": "entity" } as Repositório (createEventRating)
+  participant D@{ "type": "database" } as PostgreSQL
+  U->>T: abre "Avaliar evento" (lembrete, feed ou calendário)
+  T->>C: GET /events/:id
+  C->>R: getEventById(id, usuário)
+  R->>D: SELECT evento, participantes
+  D-->>R: dados do evento
+  R-->>C: evento
+  C-->>T: evento
+  T-->>U: exibe estrelas, comentário e visibilidade
+  U->>T: escolhe a nota (1 a 5) e confirma
+  T->>C: POST /ratings/events {eventId, stars, comment, visibility}
+  C->>C: valida o corpo (Zod: estrelas de 1 a 5)
+  alt dados inválidos
+    C-->>T: 400 Dados inválidos
+    T-->>U: pede correção
+  else dados válidos
+    C->>R: createEventRating(usuário, dados)
+    R->>D: SELECT participação e horário de fim
+    D-->>R: participou? terminou?
+    alt não participou ou ainda não terminou
+      R-->>C: erro FORBIDDEN
+      C-->>T: 403 "Você só pode avaliar um evento do qual participou e que já terminou."
+      T-->>U: mostra a mensagem
+    else pode avaliar
+      R->>D: INSERT event_ratings ... ON CONFLICT DO UPDATE
+      D-->>R: avaliação registrada
+      R-->>C: avaliação
+      C-->>T: 201 avaliação
+      T->>C: GET /ratings/events/:id
+      C->>R: getEventRatingSummary(id)
+      R->>D: SELECT avaliações do evento
+      D-->>R: notas
+      R-->>C: média e últimas avaliações
+      C-->>T: resumo
+      T-->>U: confirma e mostra a média atualizada
+    end
+  end

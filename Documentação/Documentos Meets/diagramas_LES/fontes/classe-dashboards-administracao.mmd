@@ -1,0 +1,104 @@
+---
+title: Diagrama de classe — Dashboards, Moderação e Comunicação
+---
+classDiagram
+  direction LR
+  class Usuario {
+    +UUID id
+    +String nome
+    +String tipo
+  }
+  class Administrador {
+    +manterUsuarios()
+    +analisarDenuncia()
+    +removerConteudo()
+  }
+  class Denuncia {
+    +UUID id
+    +String tipoAlvo  «post | evento | usuário»
+    +UUID idAlvo
+    +String resumoAlvo
+    +String motivo
+    +String detalhes
+    +String situacao  «pendente | em análise | improcedente | procedente»
+    +String acao  «remover conteúdo | advertir | desativar conta»
+    +String justificativa
+    +DateTime criadaEm
+    +DateTime decididaEm
+    +denunciar()
+    +iniciarAnalise()
+    +decidir()
+  }
+  class AcaoAdministrativa {
+    +String acao
+    +String tipoAlvo
+    +String idAlvo
+    +String observacao
+    +DateTime data
+    +registrar()
+  }
+  class Notificacao {
+    +String titulo
+    +String corpo
+    +String tipoAlvo
+    +String idAlvo
+    +DateTime lidaEm
+    +marcarComoLida()
+  }
+  class Conversa {
+    +UUID id
+    +String ultimaMensagem
+    +abrir()
+  }
+  class Mensagem {
+    +String conteudo
+    +DateTime data
+    +enviar()
+  }
+  class Historico {
+    +String tipo
+    +String titulo
+    +DateTime data
+    +registrar()
+  }
+  class Dashboard {
+    +String escopo  «meu conteúdo | plataforma»
+    +Integer periodoDias
+    +gerar()
+    +aplicarFiltros()
+  }
+  class IndicadoresPosts {
+    +Integer quantidade
+    +Integer curtidas
+    +Integer comentarios
+    +Integer compartilhamentos
+    +Float interacoesPorPost
+  }
+  class IndicadoresEventos {
+    +Integer quantidade
+    +Integer presencas
+    +Float avaliacaoMedia
+  }
+  class IndicadoresAvaliacoes {
+    +Map distribuicao
+    +List evolucaoMensal
+  }
+  class IndicadoresApresentadores {
+    +Integer posicaoRanking
+    +Integer pontuacaoGeral
+    +List evolucaoMensal
+  }
+  Usuario <|-- Administrador
+  Usuario "1" --> "0..*" Denuncia : denuncia
+  Administrador "0..1" --> "0..*" Denuncia : analisa
+  Administrador "1" --> "0..*" AcaoAdministrativa : realiza
+  Denuncia ..> AcaoAdministrativa : gera
+  Usuario "1" <-- "0..*" Notificacao : recebe
+  Usuario "2" -- "0..*" Conversa : participa
+  Conversa "1" *-- "0..*" Mensagem : contém
+  Usuario "1" *-- "0..*" Historico : registra
+  Usuario "1" --> "0..*" Dashboard : visualiza
+  Dashboard *-- IndicadoresPosts
+  Dashboard *-- IndicadoresEventos
+  Dashboard *-- IndicadoresAvaliacoes
+  Dashboard *-- IndicadoresApresentadores

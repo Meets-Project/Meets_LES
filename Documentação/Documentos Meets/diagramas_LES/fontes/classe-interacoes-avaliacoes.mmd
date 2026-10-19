@@ -1,0 +1,70 @@
+---
+title: Diagrama de classe — Interações e Avaliação de Evento
+---
+classDiagram
+  direction TB
+  class Usuario {
+    +UUID id
+    +String nome
+  }
+  class Conteudo {
+    <<abstract>>
+    +UUID id
+    +String visibilidade
+    +podeVer(usuario) Boolean
+  }
+  class Post {
+    +String conteudo
+  }
+  class Evento {
+    +String titulo
+    +terminou() Boolean
+  }
+  class Interacao {
+    <<abstract>>
+    +DateTime data
+    +registrar()
+    +remover()
+  }
+  class Curtida {
+    +curtir()
+    +descurtir()
+  }
+  class Comentario {
+    +String texto
+    +comentar()
+  }
+  class Compartilhamento {
+    +gerarLink() String
+  }
+  class Salvamento {
+    +salvar()
+  }
+  class Favorito {
+    +favoritar()
+  }
+  class Presenca {
+    +String situacao  «host | confirmada»
+    +confirmar()
+    +cancelar()
+  }
+  class AvaliacaoEvento {
+    +Integer estrelas  «1 a 5»
+    +String comentario
+    +String visibilidade  «pública | anônima»
+    +validarNota()
+    +editar()
+  }
+  Conteudo <|-- Post
+  Conteudo <|-- Evento
+  Interacao <|-- Curtida
+  Interacao <|-- Comentario
+  Interacao <|-- Compartilhamento
+  Interacao <|-- Salvamento
+  Interacao <|-- Favorito
+  Usuario "1" --> "0..*" Interacao : realiza
+  Conteudo "1" <-- "0..*" Interacao : recebe
+  Usuario "1" --> "0..*" Presenca : registra
+  Evento "1" <-- "1..*" Presenca : tem
+  Usuario "1" --> "0..*" AvaliacaoEvento : avalia
+  Evento "1" <-- "0..*" AvaliacaoEvento : recebe

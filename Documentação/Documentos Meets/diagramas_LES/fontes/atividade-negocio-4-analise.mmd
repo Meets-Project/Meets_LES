@@ -1,0 +1,24 @@
+---
+title: Atividade 4 — Análise do desempenho da comunidade
+---
+flowchart TB
+  ini((Início))
+  subgraph USU[Usuário ou Administrador]
+    u1[Abre o Dashboard pelo menu]
+    u2{É administrador?}
+    u3[Escolhe: meu conteúdo ou plataforma]
+    u4[Escolhe o período: tudo, 7, 30 ou 90 dias]
+    u5[Lê os indicadores de posts, eventos, avaliações e apresentadores]
+    u6[Abre o Ranking de apresentadores]
+    u7[Toca em um apresentador]
+  end
+  subgraph SIS[Sistema Meets]
+    s1[Calcula os indicadores do escopo e do período no PostgreSQL]
+    s2[Calcula a pontuação de cada apresentador e ordena: pontuação, estrelas, quantidade]
+    s3[Mostra o perfil com a média de cada atributo]
+  end
+  fim((Fim))
+  ini --> u1 --> u2
+  u2 -- sim --> u3 --> u4
+  u2 -- não --> u4
+  u4 --> s1 --> u5 --> u6 --> s2 --> u7 --> s3 --> fim

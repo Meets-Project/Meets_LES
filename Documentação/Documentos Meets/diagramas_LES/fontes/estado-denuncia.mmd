@@ -1,0 +1,15 @@
+---
+title: Estado da Denúncia
+---
+stateDiagram-v2
+  direction TB
+  [*] --> Pendente : usuário denuncia (motivo e detalhes)
+  Pendente --> EmAnalise : administrador inicia a análise
+  EmAnalise : Em análise
+  Pendente --> Improcedente : administrador decide direto
+  Pendente --> Procedente : administrador decide direto
+  EmAnalise --> Improcedente : sem violação
+  EmAnalise --> Procedente : violação confirmada + ação (remover, advertir ou desativar)
+  Pendente --> Procedente : outra denúncia do mesmo alvo removeu o conteúdo ou desativou a conta
+  Improcedente --> [*]
+  Procedente --> [*]
