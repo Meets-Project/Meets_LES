@@ -16,12 +16,41 @@ Aplicativo social para divulgação e participação em eventos, publicação de
 
 ## Como rodar a API
 
+### Opção 1: Rodando com Docker Compose (Recomendado)
+
+Inicia o banco de dados PostgreSQL e a API automaticamente:
+
 ```bash
+# Iniciar o banco e o backend em segundo plano:
+docker compose up -d
+
+# Ver logs do backend em tempo real:
+docker logs -f meets_backend
+
+# Pausar os containers:
+docker compose stop
+
+# Reiniciar os containers pausados:
+docker compose up -d
+
+# Parar e remover os containers:
+docker compose down
+```
+
+### Opção 2: Rodando a API localmente (com Hot-Reload)
+
+Caso queira editar o código do backend e ver alterações instantâneas sem rebuild do Docker:
+
+```bash
+# 1. Inicie apenas o banco PostgreSQL no Docker:
+docker compose up -d postgres
+
+# 2. Rode o backend no seu terminal:
 cd Código/backend
-cp .env.example .env        # ajuste DATABASE_URL, JWT_SECRET, SMTP e APP_TIMEZONE
+cp .env.example .env        # ajuste se necessário (o padrão já aponta para localhost:5432)
 npm install
 npm run migrate             # aplica as migrações (também roda ao iniciar)
-npm run dev                 # http://localhost:3333
+npm run dev                 # http://localhost:3333 (com reload automático ao salvar)
 npm test                    # testes (Vitest + Supertest + pg-mem)
 ```
 
@@ -51,9 +80,12 @@ Depois, reverta o commit correspondente com `git revert`.
 
 ```bash
 cd Código/snack
+cp .env.example .env        # configure EXPO_PUBLIC_API_URL=http://localhost:3333
 npm install
-npx expo start           # Android/iOS/web em desenvolvimento
-npm run build            # gera a versão web em dist/ (publicada na Vercel)
+npm run web                 # abre a versão Web diretamente no navegador
+# ou
+npx expo start              # Android/iOS/web em desenvolvimento (QR Code para app Expo Go)
+npm run build               # gera a versão web em dist/ (publicada na Vercel)
 ```
 
 O endereço da API fica em `data/apiConfig.js` (porta 3333 local; Render em produção). Depois de alterar o código, gere o `dist/` de novo antes de publicar.

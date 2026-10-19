@@ -23,3 +23,4 @@ snack/npm-debug.*
 snack/yarn-debug.*
 snack/yarn-error.*
 backend/.env
+snack/.env
