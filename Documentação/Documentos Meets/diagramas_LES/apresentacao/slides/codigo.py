@@ -83,7 +83,7 @@ async createEventRating(userId, { eventId, stars, comment, visibility = 'public'
     RETURNING id,event_id,rater_id,stars,comment,visibility,created_at,updated_at`, [...]);
 },
 
-// Passos 18-21: média exibida no app
+// Passos 17-22: média exibida no app (GET /ratings/events/:eventId)
 async getEventRatingSummary(eventId) {
   const allRatings = await many(`SELECT er.stars, er.comment, er.visibility, ... FROM event_ratings er
     JOIN users u ON u.id=er.rater_id WHERE er.event_id=$1 ORDER BY er.created_at DESC`, [eventId]);
@@ -96,7 +96,7 @@ async getEventRatingSummary(eventId) {
             ('4-5', 'POST /ratings/events e validação Zod (estrelas de 1 a 5)'),
             ('8-12', 'createEventRating(): participação e término (hasEnded); senão 403'),
             ('13', 'INSERT ... ON CONFLICT: uma avaliação por pessoa por evento'),
-            ('17-21', 'getEventRatingSummary() devolve a média exibida'),
+            ('17-22', 'getEventRatingSummary() devolve a média exibida'),
         ],
     },
     '#006': {
