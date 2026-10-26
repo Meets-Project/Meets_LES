@@ -164,7 +164,7 @@ RN = [
     ('RN21', 'Podem ser denunciados posts, apresentações, eventos e usuários, por um motivo da lista (spam, ofensivo, assédio, falso, impróprio, outro). Ninguém denuncia o próprio conteúdo, e cada pessoa tem no máximo uma denúncia aberta por alvo.'),
     ('RN22', 'Ciclo da denúncia: Pendente → Em análise → Procedente ou Improcedente; após decidida não muda. Procedente exige uma ação; "remover conteúdo" não vale para denúncia de usuário nem para conteúdo já removido. A decisão encerra junto as demais denúncias abertas sobre o mesmo alvo.'),
     ('RN23', 'Toda ação administrativa (criar, editar, promover, desativar, reativar, remover, advertir, decidir denúncia) é registrada com administrador, alvo, data e observação.'),
-    ('RN24', 'No dashboard, o usuário vê somente dados do próprio conteúdo; a visão da plataforma é exclusiva de administradores. O período pode ser desde o início, 90 ou 30 dias.'),
+    ('RN24', 'No dashboard, o usuário vê somente dados do próprio conteúdo; a visão da plataforma é exclusiva de administradores. O período do dashboard pode ser tudo, 7, 30 ou 90 dias (no ranking: desde o início, 90 ou 30 dias).'),
     ('RN25', 'Os horários do Meets seguem o fuso America/Sao_Paulo (configurável por APP_TIMEZONE).'),
     ('RN26', 'Limites: nome 2–120 caracteres; título 160; post e mensagem 5.000; comentário 2.000; biografia e comentário de avaliação 1.000; imagem até cerca de 15 MB.'),
     ('RN27', 'A conversa é direta entre duas pessoas diferentes; somente os participantes leem e enviam mensagens.'),

@@ -183,7 +183,7 @@ ATIVIDADES = [
     ('Atividade 4 - Análise do Desempenho da Comunidade', 'atividade-negocio-4-analise.png',
      'Acompanhamento de uso, engajamento e qualidade das apresentações.', [
         '**Dashboards:** o Usuário abre o dashboard e vê os indicadores do próprio conteúdo; o Administrador pode alternar para a visão da plataforma. São quatro painéis: posts, eventos, avaliações e apresentadores.',
-        '**Período:** o usuário escolhe desde o início, 90 ou 30 dias; o sistema recalcula os indicadores.',
+        '**Período:** no dashboard o usuário escolhe tudo, 7, 30 ou 90 dias; o sistema recalcula os indicadores.',
         '**Ranking:** o usuário consulta o ranking; o sistema ordena os apresentadores pela pontuação geral e mostra o pódio.',
         '**Detalhe do apresentador:** ao tocar em um apresentador, o sistema mostra as médias por atributo e as avaliações recebidas.',
     ]),

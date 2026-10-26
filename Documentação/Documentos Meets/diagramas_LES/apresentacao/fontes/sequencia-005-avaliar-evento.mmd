@@ -42,7 +42,8 @@ sequenceDiagram
       R-->>A: avaliação
       A-->>S: 201 { data }
       T->>S: getEventRatingSummary(eventId)
-      S->>R: GET /ratings/events/:eventId → getEventRatingSummary(eventId)
+      S->>A: GET /ratings/events/:eventId
+      A->>R: getEventRatingSummary(eventId)
       R->>D: SELECT stars, comment, visibility FROM event_ratings
       R-->>T: { totalRatings, averageStars, recentRatings }
       T-->>U: confirmação e média atualizada

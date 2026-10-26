@@ -160,7 +160,7 @@ UC = [
         descricao='Apresenta indicadores em quatro painéis — posts, eventos, avaliações e apresentadores. O usuário vê os dados do próprio conteúdo; o administrador pode alternar para a visão da plataforma, que inclui a comunidade.',
         pre=['Usuário autenticado;', 'Para a visão da plataforma: ser administrador.'],
         pos=['Indicadores exibidos para o escopo e o período escolhidos.'],
-        entradas=['Escopo: "Meus dados" ou "Plataforma" (administrador);', 'Período: desde o início, 90 ou 30 dias.'],
+        entradas=['Escopo: "Meu conteúdo" ou "Plataforma" (administrador);', 'Período: tudo, 7, 30 ou 90 dias.'],
         saidas=['Posts: total, curtidas, comentários, compartilhamentos e mais engajados;',
                 'Eventos: total, realizados, participantes e média de satisfação;',
                 'Avaliações: distribuição de 1 a 5 estrelas e evolução dos últimos 6 meses;',
