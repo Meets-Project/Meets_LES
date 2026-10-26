@@ -1,0 +1,65 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  themeVariables:
+    edgeLabelBackground: '#ffffff'
+    fontSize: 22px
+  flowchart:
+    nodeSpacing: 28
+    rankSpacing: 46
+    wrappingWidth: 230
+    subGraphTitleMargin:
+      top: 10
+      bottom: 14
+---
+flowchart TB
+  subgraph L1[" "]
+    direction LR
+    ini(("Início"))
+    a1["<b>Usuário</b><br/>abre “Dashboard” no menu"]
+    d1{"É administrador?"}
+    a2["<b>Administrador</b><br/>escolhe o escopo: meu conteúdo ou plataforma"]
+    a3["<b>Usuário</b><br/>escolhe o período: tudo, 7, 30 ou 90 dias (pode trocar a qualquer momento)"]
+    d2{"Plataforma sem ser admin?"}
+    e1["<b>Sistema</b><br/>recusa (403 ADMIN_ONLY)"]
+    f1((("Fim")))
+    cA1(("A"))
+    ini --> a1 --> d1
+    d1 -- sim --> a2 --> a3
+    d1 -- não --> a3
+    a3 --> d2
+    d2 -- sim --> e1 --> f1
+    d2 -- não --> cA1
+  end
+  subgraph L2[" "]
+    direction LR
+    cA2(("A"))
+    s1["<b>Sistema</b><br/>calcula em paralelo os painéis de posts, eventos, avaliações e apresentadores"]
+    d3{"Escopo plataforma?"}
+    s2["<b>Sistema</b><br/>soma os indicadores da comunidade"]
+    s3["<b>Sistema</b><br/>exibe cartões e gráficos"]
+    fim((("Fim")))
+    cA2 --> s1 --> d3
+    d3 -- sim --> s2 --> s3
+    d3 -- não --> s3
+    s3 --> fim
+  end
+  L1 ~~~ L2
+  class a1,a3 part
+  class a2 adm
+  class e1,s1,s2,s3 sis
+  class d1,d2,d3 dec
+  class ini ini
+  class f1,fim fim
+  class cA1,cA2 con
+  classDef org fill:#f0fdfa,stroke:#0d9488,color:#0f172a
+  classDef part fill:#fdf4ff,stroke:#c026d3,color:#0f172a
+  classDef sis fill:#eff6ff,stroke:#2563eb,color:#0f172a
+  classDef adm fill:#fff7ed,stroke:#ea580c,color:#0f172a
+  classDef dec fill:#fefce8,stroke:#ca8a04,color:#0f172a
+  classDef ini fill:#111827,stroke:#111827,color:#ffffff
+  classDef fim fill:#ffffff,stroke:#111827,stroke-width:4px,color:#111827
+  classDef con fill:#ffffff,stroke:#111827,color:#111827
+  style L1 fill:none,stroke:none
+  style L2 fill:none,stroke:none

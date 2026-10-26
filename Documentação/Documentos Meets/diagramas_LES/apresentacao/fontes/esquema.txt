@@ -1,0 +1,161 @@
+admin_actions|id|bigint|NO|PK|
+admin_actions|admin_id|uuid|YES||FK>users
+admin_actions|action|character varying|NO||
+admin_actions|target_type|character varying|NO||
+admin_actions|target_id|text|NO||
+admin_actions|note|character varying|NO||
+admin_actions|created_at|timestamp with time zone|NO||
+chat_members|chat_id|uuid|NO|PK|FK>chats
+chat_members|user_id|uuid|NO|PK|FK>users
+chat_members|unread|integer|NO||
+chat_messages|id|uuid|NO|PK|
+chat_messages|chat_id|uuid|NO||FK>chats
+chat_messages|sender_id|uuid|NO||FK>users
+chat_messages|content|text|NO||
+chat_messages|created_at|timestamp with time zone|NO||
+chats|id|uuid|NO|PK|
+chats|name|character varying|NO||
+chats|preview|character varying|NO||
+chats|created_at|timestamp with time zone|NO||
+content_audience|content_type|character varying|NO|PK|
+content_audience|content_id|text|NO|PK|
+content_audience|user_id|uuid|NO|PK|FK>users
+content_audience|created_at|timestamp with time zone|NO||
+content_shares|id|bigint|NO|PK|
+content_shares|user_id|uuid|YES||FK>users
+content_shares|content_type|character varying|NO||
+content_shares|content_id|uuid|NO||
+content_shares|created_at|timestamp with time zone|NO||
+event_likes|user_id|uuid|NO|PK|FK>users
+event_likes|event_id|uuid|NO|PK|FK>events
+event_likes|created_at|timestamp with time zone|NO||
+event_participants|event_id|uuid|NO|PK|FK>events
+event_participants|user_id|uuid|NO|PK|FK>users
+event_participants|status|character varying|NO||
+event_participants|created_at|timestamp with time zone|NO||
+event_ratings|id|bigint|NO|PK|
+event_ratings|event_id|uuid|NO||FK>events
+event_ratings|rater_id|uuid|NO||FK>users
+event_ratings|stars|numeric|NO||
+event_ratings|comment|character varying|NO||
+event_ratings|visibility|character varying|NO||
+event_ratings|created_at|timestamp with time zone|NO||
+event_ratings|updated_at|timestamp with time zone|NO||
+events|id|uuid|NO|PK|
+events|author_id|uuid|NO||FK>users
+events|title|character varying|NO||
+events|description|text|NO||
+events|created_at|timestamp with time zone|NO||
+events|image|text|YES||
+events|event_date|date|YES||
+events|event_time|time without time zone|YES||
+events|event_end_time|time without time zone|YES||
+events|location|character varying|NO||
+events|visibility|character varying|NO||
+events|share_token|text|YES||
+favorites|user_id|uuid|NO|PK|FK>users
+favorites|post_id|uuid|NO|PK|FK>posts
+favorites|created_at|timestamp with time zone|NO||
+history|id|bigint|NO|PK|
+history|user_id|uuid|NO||FK>users
+history|type|character varying|NO||
+history|title|character varying|NO||
+history|subtitle|character varying|NO||
+history|created_at|timestamp with time zone|NO||
+notifications|id|bigint|NO|PK|
+notifications|user_id|uuid|NO||FK>users
+notifications|title|character varying|NO||
+notifications|body|character varying|NO||
+notifications|read_at|timestamp with time zone|YES||
+notifications|created_at|timestamp with time zone|NO||
+notifications|target_type|character varying|YES||
+notifications|target_id|text|YES||
+notifications|target_token|text|YES||
+post_comments|id|uuid|NO|PK|
+post_comments|post_id|uuid|YES||FK>posts
+post_comments|event_id|uuid|YES||FK>events
+post_comments|user_id|uuid|NO||FK>users
+post_comments|content|text|NO||
+post_comments|created_at|timestamp with time zone|NO||
+post_likes|user_id|uuid|NO|PK|FK>users
+post_likes|post_id|uuid|NO|PK|FK>posts
+post_likes|created_at|timestamp with time zone|NO||
+posts|id|uuid|NO|PK|
+posts|author_id|uuid|NO||FK>users
+posts|content|text|NO||
+posts|image|text|YES||
+posts|likes|integer|NO||
+posts|created_at|timestamp with time zone|NO||
+posts|type|character varying|NO||
+posts|title|character varying|NO||
+posts|presentation_id|character varying|YES||
+posts|mentioned_event_id|uuid|YES||FK>events
+posts|event_date|date|YES||
+posts|event_time|time without time zone|YES||
+posts|event_end_time|time without time zone|YES||
+posts|visibility|character varying|NO||
+posts|share_token|text|YES||
+presentation_ratings|id|bigint|NO|PK|
+presentation_ratings|presentation_id|character varying|NO||
+presentation_ratings|post_id|uuid|YES||FK>posts
+presentation_ratings|rater_id|uuid|NO||FK>users
+presentation_ratings|speaker_id|uuid|NO||FK>users
+presentation_ratings|stars|numeric|NO||
+presentation_ratings|skills|jsonb|NO||
+presentation_ratings|comment|character varying|NO||
+presentation_ratings|created_at|timestamp with time zone|NO||
+presentation_ratings|updated_at|timestamp with time zone|NO||
+presentation_ratings|visibility|character varying|NO||
+presentation_speakers|presentation_id|character varying|NO|PK|
+presentation_speakers|speaker_id|uuid|NO|PK|FK>users
+presentation_speakers|created_at|timestamp with time zone|NO||
+profiles|user_id|uuid|NO|PK|FK>users
+profiles|role|character varying|NO||
+profiles|city|character varying|NO||
+profiles|address_number|character varying|NO||
+profiles|avatar|text|NO||
+profiles|bio|text|NO||
+profiles|created_at|timestamp with time zone|NO||
+profiles|updated_at|timestamp with time zone|NO||
+reports|id|uuid|NO|PK|
+reports|reporter_id|uuid|YES||FK>users
+reports|target_type|character varying|NO||
+reports|target_id|uuid|NO||
+reports|target_owner_id|uuid|YES||FK>users
+reports|target_preview|character varying|NO||
+reports|reason|character varying|NO||
+reports|details|character varying|NO||
+reports|status|character varying|NO||
+reports|action|character varying|YES||
+reports|decision_note|character varying|NO||
+reports|reviewed_by|uuid|YES||FK>users
+reports|review_started_at|timestamp with time zone|YES||
+reports|decided_at|timestamp with time zone|YES||
+reports|created_at|timestamp with time zone|NO||
+saved_events|user_id|uuid|NO|PK|FK>users
+saved_events|event_id|uuid|NO|PK|FK>events
+saved_events|created_at|timestamp with time zone|NO||
+saved_posts|user_id|uuid|NO|PK|FK>users
+saved_posts|post_id|uuid|NO|PK|FK>posts
+saved_posts|created_at|timestamp with time zone|NO||
+settings|user_id|uuid|NO|PK|FK>users
+settings|notifications_enabled|boolean|NO||
+settings|dark_mode|boolean|NO||
+settings|updated_at|timestamp with time zone|NO||
+user_connections|user_id|uuid|NO|PK|FK>users
+user_connections|connected_user_id|uuid|NO|PK|FK>users
+user_connections|created_at|timestamp with time zone|NO||
+users|id|uuid|NO|PK|
+users|name|character varying|NO||
+users|email|character varying|NO||
+users|password_hash|text|NO||
+users|created_at|timestamp with time zone|NO||
+users|updated_at|timestamp with time zone|NO||
+users|email_verified|boolean|NO||
+users|email_verification_token_hash|text|YES||
+users|email_verification_expires_at|timestamp with time zone|YES||
+users|account_type|character varying|NO||
+users|status|character varying|NO||
+users|deactivated_at|timestamp with time zone|YES||
+users|deactivated_by|uuid|YES||FK>users
+users|deactivation_reason|character varying|NO||

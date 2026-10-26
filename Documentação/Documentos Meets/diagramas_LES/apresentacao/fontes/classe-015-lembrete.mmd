@@ -1,0 +1,87 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  class:
+    hideEmptyMembersBox: true
+---
+classDiagram
+  direction LR
+  class Usuario {
+    <<users>>
+    +uuid id
+    +varchar name
+    +varchar status
+  }
+  class Configuracao {
+    <<settings>>
+    +uuid user_id
+    +boolean notifications_enabled
+  }
+  class Evento {
+    <<events>>
+    +uuid id
+    +varchar title
+    +date event_date
+    +time event_end_time
+    +text share_token
+  }
+  class Participacao {
+    <<event_participants>>
+    +uuid event_id
+    +uuid user_id
+    +varchar status
+  }
+  class Apresentacao {
+    <<posts type=presentation>>
+    +uuid id
+    +varchar presentation_id
+    +uuid mentioned_event_id
+    +date event_date
+    +time event_end_time
+  }
+  class Notificacao {
+    <<notifications>>
+    +bigint id
+    +varchar title
+    +varchar body
+    +varchar target_type
+    +text target_id
+    +timestamptz read_at
+  }
+  class Agendador {
+    <<server.js>>
+    +notifyFinished()
+    +setInterval(notifyFinished, 60_000)
+  }
+  class Repository {
+    <<repository.js>>
+    +listNotifications(userId)
+    +ensureRatingNotifications(userId)
+    +createNotification(userId, dados)
+    +markNotificationRead(userId, id)
+  }
+  class Clock {
+    <<services/clock.js>>
+    +APP_TIMEZONE
+    +nowParts(timeZone)
+    +hasEnded(dateValue, timeValue)
+  }
+  Usuario "1" -- "1" Configuracao : define
+  Usuario "1" -- "0..*" Participacao : participa
+  Evento "1" -- "0..*" Participacao : tem
+  Apresentacao "0..*" --> "0..1" Evento : mentioned_event_id
+  Usuario "1" -- "0..*" Notificacao : recebe
+  Agendador ..> Notificacao : cria lembretes
+  Repository ..> Notificacao : lista e garante
+  Repository ..> Clock : hasEnded()
+  Agendador ..> Configuracao : ignora notificações desligadas
+  style Usuario fill:#fdf4ff,stroke:#c026d3
+  style Configuracao fill:#f8fafc,stroke:#64748b
+  style Evento fill:#f0fdf4,stroke:#16a34a
+  style Participacao fill:#f7fee7,stroke:#65a30d
+  style Apresentacao fill:#f5f3ff,stroke:#7c3aed
+  style Notificacao fill:#fffbeb,stroke:#d97706
+  style Agendador fill:#fff7ed,stroke:#ea580c
+  style Repository fill:#eff6ff,stroke:#2563eb
+  style Clock fill:#f0f9ff,stroke:#0284c7

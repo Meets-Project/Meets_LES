@@ -1,0 +1,82 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  class:
+    hideEmptyMembersBox: true
+---
+classDiagram
+  direction LR
+  class Usuario {
+    <<users>>
+    +uuid id
+    +varchar name
+    +varchar account_type «user | admin»
+    +varchar status «active | deactivated»
+    +varchar deactivation_reason
+  }
+  class Denuncia {
+    <<reports>>
+    +uuid id
+    +uuid reporter_id
+    +varchar target_type «post | event | user»
+    +uuid target_id
+    +uuid target_owner_id
+    +varchar reason
+    +varchar status «pending | in_review | upheld | dismissed»
+    +varchar action «remove_content | warn_author | deactivate_user»
+    +varchar decision_note
+    +uuid reviewed_by
+  }
+  class AcaoAdministrativa {
+    <<admin_actions>>
+    +bigint id
+    +uuid admin_id
+    +varchar action
+    +varchar target_type
+    +text target_id
+    +varchar note
+  }
+  class ReportRoutes {
+    <<routes/reportRoutes.js>>
+    +GET /admin/reports
+    +GET /admin/reports/:id
+    +POST /admin/reports/:id/start
+    +POST /admin/reports/:id/decide
+  }
+  class ReportsRepository {
+    <<reportsRepository.js>>
+    +list(status)
+    +get(id)
+    +describeTarget(type, id)
+    +listForTarget(type, id, exceptId)
+    +startReview(id, adminId)
+    +decide(id, dados)
+    +closeOthersOnTarget(type, targetId, exceptId, dados)
+  }
+  class Moderation {
+    <<services/moderation.js>>
+    +removeContent(adminId, alvo)
+    +warnUser(adminId, dados)
+    +deactivateUser(adminId, dados)
+  }
+  class AdminRepository {
+    <<adminRepository.js>>
+    +logAction(adminId, dados)
+  }
+  Usuario "1" -- "0..*" Denuncia : denuncia (reporter_id)
+  Usuario "0..1" -- "0..*" Denuncia : analisa (reviewed_by)
+  Usuario "1" -- "0..*" AcaoAdministrativa : realiza (admin_id)
+  ReportRoutes ..> ReportsRepository : consulta e decide
+  ReportRoutes ..> Moderation : executa a ação
+  ReportRoutes ..> AdminRepository : registra
+  ReportsRepository ..> Denuncia
+  Moderation ..> AdminRepository : logAction()
+  AdminRepository ..> AcaoAdministrativa
+  style Usuario fill:#fdf4ff,stroke:#c026d3
+  style Denuncia fill:#fefce8,stroke:#ca8a04
+  style AcaoAdministrativa fill:#fef2f2,stroke:#dc2626
+  style ReportRoutes fill:#fff7ed,stroke:#ea580c
+  style ReportsRepository fill:#ecfeff,stroke:#0891b2
+  style Moderation fill:#f5f3ff,stroke:#7c3aed
+  style AdminRepository fill:#f0fdf4,stroke:#16a34a

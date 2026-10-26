@@ -1,0 +1,69 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  themeVariables:
+    fontSize: 22px
+  er:
+    entityPadding: 18
+---
+erDiagram
+  direction LR
+  users {
+    uuid id PK
+    varchar name
+    timestamptz created_at
+    varchar account_type
+    varchar status
+  }
+  events {
+    uuid id PK
+    uuid author_id FK
+    varchar title
+  }
+  posts {
+    uuid id PK
+    uuid author_id FK
+    varchar title
+  }
+  event_ratings {
+    bigint id PK
+    uuid event_id FK
+    uuid rater_id FK
+    numeric stars
+    varchar comment
+    varchar visibility
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  presentation_ratings {
+    bigint id PK
+    varchar presentation_id
+    uuid post_id FK
+    uuid rater_id FK
+    uuid speaker_id FK
+    numeric stars
+    jsonb skills
+    varchar comment
+    timestamptz created_at
+    timestamptz updated_at
+    varchar visibility
+  }
+  reports {
+    uuid id PK
+    varchar status
+    timestamptz created_at
+  }
+  users ||--o{ events : "author_id"
+  users ||--o{ posts : "author_id"
+  events ||--o{ event_ratings : "event_id"
+  users ||--o{ event_ratings : "rater_id"
+  posts ||--o{ presentation_ratings : "post_id"
+  users ||--o{ presentation_ratings : "rater_id"
+  users ||--o{ presentation_ratings : "speaker_id"
+  style users fill:#fdf4ff,stroke:#c026d3
+  style events fill:#f0fdf4,stroke:#16a34a
+  style posts fill:#ecfeff,stroke:#0891b2
+  style event_ratings fill:#eff6ff,stroke:#2563eb
+  style presentation_ratings fill:#eef2ff,stroke:#4f46e5
+  style reports fill:#fefce8,stroke:#ca8a04

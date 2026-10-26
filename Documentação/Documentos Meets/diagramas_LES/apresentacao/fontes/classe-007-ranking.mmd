@@ -1,0 +1,59 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  class:
+    hideEmptyMembersBox: true
+---
+classDiagram
+  direction LR
+  class Usuario {
+    <<users>>
+    +uuid id
+    +varchar name
+    +varchar status
+  }
+  class Perfil {
+    <<profiles>>
+    +uuid user_id
+    +varchar role
+    +text avatar
+  }
+  class AvaliacaoApresentacao {
+    <<presentation_ratings>>
+    +uuid speaker_id
+    +numeric stars
+    +jsonb skills
+    +timestamptz created_at
+  }
+  class ItemRanking {
+    <<resposta de GET /ranking>>
+    +int position
+    +object speaker
+    +int overall «0 a 99»
+    +float averageStars
+    +int totalRatings
+    +object averageSkills
+  }
+  class AnalyticsRepository {
+    <<analyticsRepository.js>>
+    +ranking(since)
+  }
+  class Scoring {
+    <<services/scoring.js>>
+    +SKILL_KEYS
+    +summarizeSpeakerRatings(rows)
+    +rankSpeakers(entries)
+  }
+  Usuario "1" -- "1" Perfil : possui
+  Usuario "1" -- "0..*" AvaliacaoApresentacao : é avaliado
+  AnalyticsRepository ..> AvaliacaoApresentacao : SELECT do período
+  AnalyticsRepository ..> Scoring : agrupa e ordena
+  Scoring ..> ItemRanking : gera
+  ItemRanking --> Usuario : speaker
+  style Usuario fill:#fdf4ff,stroke:#c026d3
+  style Perfil fill:#fff7ed,stroke:#ea580c
+  style AvaliacaoApresentacao fill:#eef2ff,stroke:#4f46e5
+  style ItemRanking fill:#f0fdf4,stroke:#16a34a
+  style AnalyticsRepository fill:#ecfeff,stroke:#0891b2
+  style Scoring fill:#fefce8,stroke:#ca8a04

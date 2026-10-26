@@ -1,0 +1,75 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  themeVariables:
+    fontSize: 22px
+  er:
+    entityPadding: 18
+---
+erDiagram
+  direction LR
+  users {
+    uuid id PK
+    varchar name
+    varchar email
+    varchar account_type
+    varchar status
+  }
+  posts {
+    uuid id PK
+    uuid author_id FK
+    varchar type
+    varchar title
+    varchar presentation_id
+    uuid mentioned_event_id FK
+    date event_date
+    time event_end_time
+  }
+  presentation_speakers {
+    varchar presentation_id PK
+    uuid speaker_id PK,FK
+    timestamptz created_at
+  }
+  presentation_ratings {
+    bigint id PK
+    varchar presentation_id
+    uuid post_id FK
+    uuid rater_id FK
+    uuid speaker_id FK
+    numeric stars
+    jsonb skills
+    varchar comment
+    timestamptz created_at
+    timestamptz updated_at
+    varchar visibility
+  }
+  events {
+    uuid id PK
+    uuid author_id FK
+    varchar title
+    date event_date
+    time event_end_time
+  }
+  event_participants {
+    uuid event_id PK,FK
+    uuid user_id PK,FK
+    varchar status
+    timestamptz created_at
+  }
+  users ||--o{ posts : "author_id"
+  events ||--o{ posts : "mentioned_event_id"
+  users ||--o{ presentation_speakers : "speaker_id"
+  posts ||--o{ presentation_ratings : "post_id"
+  users ||--o{ presentation_ratings : "rater_id"
+  users ||--o{ presentation_ratings : "speaker_id"
+  users ||--o{ events : "author_id"
+  events ||--o{ event_participants : "event_id"
+  users ||--o{ event_participants : "user_id"
+  posts ||--o{ presentation_speakers : "presentation_id (lógico)"
+  style users fill:#fdf4ff,stroke:#c026d3
+  style posts fill:#ecfeff,stroke:#0891b2
+  style presentation_speakers fill:#f5f3ff,stroke:#7c3aed
+  style presentation_ratings fill:#eef2ff,stroke:#4f46e5
+  style events fill:#f0fdf4,stroke:#16a34a
+  style event_participants fill:#f7fee7,stroke:#65a30d

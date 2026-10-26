@@ -1,0 +1,68 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  themeVariables:
+    edgeLabelBackground: '#ffffff'
+    fontSize: 22px
+  flowchart:
+    nodeSpacing: 28
+    rankSpacing: 46
+    wrappingWidth: 230
+    subGraphTitleMargin:
+      top: 10
+      bottom: 14
+---
+flowchart TB
+  subgraph L1[" "]
+    direction LR
+  ini(("Início"))
+  a1["<b>Organizador</b><br/>preenche título, descrição, data, início, fim, local e visibilidade"]
+  s1{"Dados<br/>válidos?"}
+  s2["<b>Sistema</b><br/>mostra o erro (campo obrigatório, data passada, fim antes do início)"]
+  s3["<b>Sistema</b><br/>publica o evento e registra o organizador como host"]
+  a2["<b>Organizador</b><br/>cadastra apresentação vinculada, com horário e apresentadores"]
+  p1["<b>Participante</b><br/>vê o evento no feed; curte, comenta ou compartilha"]
+  p2{"Já confirmou<br/>presença?"}
+  p3["<b>Participante</b><br/>confirma presença"]
+  p4["<b>Participante</b><br/>pode cancelar a presença"]
+  s4["<b>Sistema</b><br/>registra ou cancela a presença e avisa o organizador"]
+  cA1(("A"))
+  end
+  subgraph L2[" "]
+    direction LR
+  cA2(("A"))
+  s5["<b>Sistema</b><br/>a cada minuto verifica eventos e apresentações que terminaram"]
+  s6["<b>Sistema</b><br/>envia lembrete de avaliação a quem participou"]
+  p5["<b>Participante</b><br/>avalia o evento (1–5 estrelas) e o apresentador (6 atributos)"]
+  s7["<b>Sistema</b><br/>registra as avaliações e recalcula médias, pontuação e ranking"]
+  fim((("Fim")))
+  end
+  L1 ~~~ L2
+  ini --> a1 --> s1
+  s1 -- não --> s2 --> a1
+  s1 -- sim --> s3
+  s3 -.-> a2
+  s3 --> p1 --> p2
+  p2 -- não --> p3 --> s4
+  p2 -- sim --> p4 --> s4
+  s4 --> cA1
+  cA2 --> s5
+  s5 -- evento terminou --> s6 --> p5 --> s7 --> fim
+  class a1,a2 org
+  class p1,p3,p4,p5 part
+  class s2,s3,s4,s5,s6,s7 sis
+  class s1,p2 dec
+  class ini ini
+  class fim fim
+  class cA1,cA2 con
+  style L1 fill:none,stroke:none
+  style L2 fill:none,stroke:none
+  classDef org fill:#f0fdfa,stroke:#0d9488,color:#0f172a
+  classDef part fill:#fdf4ff,stroke:#c026d3,color:#0f172a
+  classDef sis fill:#eff6ff,stroke:#2563eb,color:#0f172a
+  classDef adm fill:#fff7ed,stroke:#ea580c,color:#0f172a
+  classDef dec fill:#fefce8,stroke:#ca8a04,color:#0f172a
+  classDef ini fill:#111827,stroke:#111827,color:#ffffff
+  classDef fim fill:#ffffff,stroke:#111827,stroke-width:4px,color:#111827
+  classDef con fill:#ffffff,stroke:#111827,color:#111827

@@ -1,0 +1,46 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  themeVariables:
+    fontSize: 18px
+  sequence:
+    showSequenceNumbers: true
+    wrap: false
+    messageFontSize: 17
+    noteFontSize: 16
+    actorFontSize: 18
+    mirrorActors: false
+---
+sequenceDiagram
+  autonumber
+  actor U as Usuário / Administrador
+  participant T@{ "type": "boundary" } as DashboardScreen
+  participant A@{ "type": "control" } as app.js GET /dashboard
+  participant R@{ "type": "entity" } as analyticsRepository.js
+  participant D@{ "type": "database" } as PostgreSQL
+  U->>T: abre “Dashboard”, escolhe escopo e período
+  T->>A: getDashboard({ scope, days })
+  alt scope = 'platform' e não é administrador
+    A-->>T: 403 ADMIN_ONLY
+    T-->>U: “exclusivo dos administradores”
+  else escopo permitido
+    A->>R: dashboard({ scope, ownerId: req.auth.sub, since })
+    par painéis em paralelo
+      R->>D: postsBlock(params)
+    and
+      R->>D: eventsBlock(params)
+    and
+      R->>D: ratingsBlock(params)
+    and
+      R->>R: presentersBlock({ since, ownerId })
+    end
+    D-->>R: contagens e linhas
+    opt scope = 'platform'
+      R->>D: activeUsers, deactivatedUsers, newUsers, openReports
+      R->>R: result.community = { ... }
+    end
+    R-->>A: { scope, posts, events, ratings, presenters, community? }
+    A-->>T: 200 { data }
+    T-->>U: cartões e gráficos
+  end

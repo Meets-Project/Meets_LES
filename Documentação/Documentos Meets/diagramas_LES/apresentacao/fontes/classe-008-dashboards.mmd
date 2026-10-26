@@ -1,0 +1,89 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  class:
+    hideEmptyMembersBox: true
+---
+classDiagram
+  direction LR
+  class DashboardRoute {
+    <<app.js · GET /dashboard>>
+    +scope «me | platform»
+    +days «0 = tudo, 7, 30, 90»
+  }
+  class AnalyticsRepository {
+    <<analyticsRepository.js>>
+    +dashboard(scope, ownerId, since)
+    -postsBlock(params)
+    -eventsBlock(params)
+    -ratingsBlock(params)
+    -presentersBlock(since, ownerId)
+  }
+  class Dashboard {
+    <<resposta>>
+    +scope
+    +since
+    +generatedAt
+    +object posts
+    +object events
+    +object ratings
+    +object presenters
+    +object community «só plataforma»
+  }
+  class PainelPosts {
+    <<posts>>
+    +int total
+    +int likes
+    +int comments
+    +int shares
+    +float engagementPerPost
+    +array top
+  }
+  class PainelEventos {
+    <<events>>
+    +int total
+    +int participants
+    +int likes
+    +int comments
+    +int shares
+    +float averageRating
+    +int ratingsCount
+    +array top
+  }
+  class PainelAvaliacoes {
+    <<ratings>>
+    +object events «count, average»
+    +object presentations «count, average»
+    +array distribution «1 a 5 estrelas»
+    +array evolution «6 meses»
+  }
+  class PainelApresentadores {
+    <<presenters>>
+    +int totalRanked
+    +array top «plataforma»
+    +object mine «meus dados»
+    +array evolution
+  }
+  class Comunidade {
+    <<community>>
+    +int activeUsers
+    +int deactivatedUsers
+    +int newUsers
+    +int openReports
+  }
+  DashboardRoute ..> AnalyticsRepository : chama
+  AnalyticsRepository ..> Dashboard : monta
+  Dashboard *-- PainelPosts
+  Dashboard *-- PainelEventos
+  Dashboard *-- PainelAvaliacoes
+  Dashboard *-- PainelApresentadores
+  Dashboard *-- "0..1" Comunidade
+  style DashboardRoute fill:#fff7ed,stroke:#ea580c
+  style AnalyticsRepository fill:#ecfeff,stroke:#0891b2
+  style Dashboard fill:#fdf4ff,stroke:#c026d3
+  style PainelPosts fill:#f0f9ff,stroke:#0284c7
+  style PainelEventos fill:#f0fdf4,stroke:#16a34a
+  style PainelAvaliacoes fill:#eff6ff,stroke:#2563eb
+  style PainelApresentadores fill:#eef2ff,stroke:#4f46e5
+  style Comunidade fill:#fefce8,stroke:#ca8a04

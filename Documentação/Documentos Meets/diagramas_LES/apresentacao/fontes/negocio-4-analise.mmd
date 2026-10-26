@@ -1,0 +1,59 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  themeVariables:
+    edgeLabelBackground: '#ffffff'
+    fontSize: 22px
+  flowchart:
+    nodeSpacing: 28
+    rankSpacing: 46
+    wrappingWidth: 230
+    subGraphTitleMargin:
+      top: 10
+      bottom: 14
+---
+flowchart TB
+  subgraph L1[" "]
+    direction LR
+    ini(("Início"))
+    u1["<b>Usuário ou Administrador</b><br/>abre o Dashboard pelo menu"]
+    u2{"É administrador?"}
+    u3["<b>Administrador</b><br/>escolhe: meu conteúdo ou plataforma"]
+    u4["<b>Usuário</b><br/>escolhe o período: tudo, 7, 30 ou 90 dias"]
+    s1["<b>Sistema</b><br/>calcula os indicadores do escopo e do período"]
+    u5["<b>Usuário</b><br/>lê os painéis de posts, eventos, avaliações e apresentadores"]
+    cA1(("A"))
+    ini --> u1 --> u2
+    u2 -- sim --> u3 --> u4
+    u2 -- não --> u4
+    u4 --> s1 --> u5 --> cA1
+  end
+  subgraph L2[" "]
+    direction LR
+    cA2(("A"))
+    u6["<b>Usuário</b><br/>abre o Ranking e escolhe o período: desde o início, 90 ou 30 dias"]
+    s2["<b>Sistema</b><br/>calcula a pontuação de cada apresentador e ordena: pontuação, estrelas, quantidade, nome"]
+    u7["<b>Usuário</b><br/>toca em um apresentador"]
+    s3["<b>Sistema</b><br/>mostra o perfil com a média de cada atributo"]
+    fim((("Fim")))
+    cA2 --> u6 --> s2 --> u7 --> s3 --> fim
+  end
+  L1 ~~~ L2
+  class u1,u4,u5,u6,u7 part
+  class u3 adm
+  class s1,s2,s3 sis
+  class u2 dec
+  class ini ini
+  class fim fim
+  class cA1,cA2 con
+  classDef org fill:#f0fdfa,stroke:#0d9488,color:#0f172a
+  classDef part fill:#fdf4ff,stroke:#c026d3,color:#0f172a
+  classDef sis fill:#eff6ff,stroke:#2563eb,color:#0f172a
+  classDef adm fill:#fff7ed,stroke:#ea580c,color:#0f172a
+  classDef dec fill:#fefce8,stroke:#ca8a04,color:#0f172a
+  classDef ini fill:#111827,stroke:#111827,color:#ffffff
+  classDef fim fill:#ffffff,stroke:#111827,stroke-width:4px,color:#111827
+  classDef con fill:#ffffff,stroke:#111827,color:#111827
+  style L1 fill:none,stroke:none
+  style L2 fill:none,stroke:none

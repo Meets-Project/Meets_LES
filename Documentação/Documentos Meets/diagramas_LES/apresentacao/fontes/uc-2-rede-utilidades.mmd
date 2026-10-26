@@ -1,0 +1,49 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  themeVariables:
+    labelBackground: '#ffffff'
+    edgeLabelBackground: '#ffffff'
+    mainBkg: '#ffffff'
+    fontSize: 20px
+  flowchart:
+    nodeSpacing: 26
+    rankSpacing: 140
+    wrappingWidth: 420
+    subGraphTitleMargin:
+      top: 14
+      bottom: 22
+---
+flowchart LR
+  USR@{ img: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI5MCIgdmlld0JveD0iMCAwIDYwIDkwIj48ZyBmaWxsPSJub25lIiBzdHJva2U9IiNjMDI2ZDMiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjE0IiByPSIxMSIgZmlsbD0iI2ZkZjRmZiIvPjxsaW5lIHgxPSIzMCIgeTE9IjI1IiB4Mj0iMzAiIHkyPSI1OCIvPjxsaW5lIHgxPSI4IiB5MT0iMzgiIHgyPSI1MiIgeTI9IjM4Ii8+PGxpbmUgeDE9IjMwIiB5MT0iNTgiIHgyPSIxMiIgeTI9Ijg2Ii8+PGxpbmUgeDE9IjMwIiB5MT0iNTgiIHgyPSI0OCIgeTI9Ijg2Ii8+PC9nPjwvc3ZnPg==", label: "Usuário", pos: "b", w: 56, h: 84, constraint: "on" }
+  subgraph S1["Sistema Meets — rede, comunicação e utilidades"]
+    c017(["#017 Conectar-se a Usuários"])
+    class c017 basico
+    c018(["#018 Conversar"])
+    class c018 basico
+    c019(["#019 Visualizar Notificações"])
+    class c019 basico
+    c020(["#020 Pesquisar"])
+    class c020 basico
+    c021(["#021 Consultar Histórico"])
+    class c021 basico
+    c022(["#022 Gerenciar Configurações"])
+    class c022 basico
+    c016(["#016 Denunciar Conteúdo"])
+    class c016 basico
+  end
+  USR --- c017
+  USR --- c018
+  USR --- c019
+  USR --- c020
+  USR --- c021
+  USR --- c022
+  USR --- c016
+  class USR ator
+
+  classDef ator fill:transparent,stroke:transparent,color:#1f2937
+  classDef basico fill:#f1f5f9,stroke:#475569,color:#0f172a
+  classDef analise fill:#dbeafe,stroke:#2563eb,color:#0f172a
+  classDef conducao fill:#ffedd5,stroke:#ea580c,color:#0f172a
+  classDef capitulo stroke-width:4px

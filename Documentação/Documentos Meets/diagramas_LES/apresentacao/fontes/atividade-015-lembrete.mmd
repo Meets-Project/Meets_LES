@@ -1,0 +1,61 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  themeVariables:
+    edgeLabelBackground: '#ffffff'
+    fontSize: 22px
+  flowchart:
+    nodeSpacing: 28
+    rankSpacing: 46
+    wrappingWidth: 230
+    subGraphTitleMargin:
+      top: 10
+      bottom: 14
+---
+flowchart TB
+  subgraph L1[" "]
+    direction LR
+    ini(("A cada 60 s"))
+    a1["<b>Agendador</b><br/>busca eventos e apresentações com data e horário de fim"]
+    d1{"Terminou no horário de Brasília?"}
+    f1((("Aguarda o próximo ciclo")))
+    a2["<b>Sistema</b><br/>lista os participantes de cada item terminado"]
+    cA1(("A"))
+    ini --> a1 --> d1
+    d1 -- não --> f1
+    d1 -- sim --> a2 --> cA1
+  end
+  subgraph L2[" "]
+    direction LR
+    cA2(("A"))
+    d2{"Desligou as notificações?"}
+    d3{"Já recebeu este lembrete?"}
+    a4["<b>Sistema</b><br/>ignora este participante"]
+    a3["<b>Sistema</b><br/>cria a notificação “Avalie o evento / a apresentação” com o link"]
+    a5["<b>Participante</b><br/>toca no lembrete e vai para a avaliação (#005 ou #006)"]
+    fim((("Fim do ciclo")))
+    cA2 --> d2
+    d2 -- sim --> a4 --> fim
+    d2 -- não --> d3
+    d3 -- sim --> a4
+    d3 -- não --> a3 --> a5 --> fim
+  end
+  L1 ~~~ L2
+  class a1 adm
+  class a2,a3,a4 sis
+  class a5 part
+  class d1,d2,d3 dec
+  class ini ini
+  class f1,fim fim
+  class cA1,cA2 con
+  classDef org fill:#f0fdfa,stroke:#0d9488,color:#0f172a
+  classDef part fill:#fdf4ff,stroke:#c026d3,color:#0f172a
+  classDef sis fill:#eff6ff,stroke:#2563eb,color:#0f172a
+  classDef adm fill:#fff7ed,stroke:#ea580c,color:#0f172a
+  classDef dec fill:#fefce8,stroke:#ca8a04,color:#0f172a
+  classDef ini fill:#111827,stroke:#111827,color:#ffffff
+  classDef fim fill:#ffffff,stroke:#111827,stroke-width:4px,color:#111827
+  classDef con fill:#ffffff,stroke:#111827,color:#111827
+  style L1 fill:none,stroke:none
+  style L2 fill:none,stroke:none

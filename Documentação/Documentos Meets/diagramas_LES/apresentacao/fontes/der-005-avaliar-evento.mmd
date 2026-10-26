@@ -1,0 +1,53 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  themeVariables:
+    fontSize: 22px
+  er:
+    entityPadding: 18
+---
+erDiagram
+  direction LR
+  users {
+    uuid id PK
+    varchar name
+    varchar email
+    varchar account_type
+    varchar status
+  }
+  events {
+    uuid id PK
+    uuid author_id FK
+    varchar title
+    date event_date
+    time event_time
+    time event_end_time
+    varchar location
+    varchar visibility
+  }
+  event_participants {
+    uuid event_id PK,FK
+    uuid user_id PK,FK
+    varchar status
+    timestamptz created_at
+  }
+  event_ratings {
+    bigint id PK
+    uuid event_id FK
+    uuid rater_id FK
+    numeric stars
+    varchar comment
+    varchar visibility
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  users ||--o{ events : "author_id"
+  events ||--o{ event_participants : "event_id"
+  users ||--o{ event_participants : "user_id"
+  events ||--o{ event_ratings : "event_id"
+  users ||--o{ event_ratings : "rater_id"
+  style users fill:#fdf4ff,stroke:#c026d3
+  style events fill:#f0fdf4,stroke:#16a34a
+  style event_participants fill:#f7fee7,stroke:#65a30d
+  style event_ratings fill:#eff6ff,stroke:#2563eb

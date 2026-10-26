@@ -1,0 +1,54 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  themeVariables:
+    fontSize: 18px
+  sequence:
+    showSequenceNumbers: true
+    wrap: false
+    messageFontSize: 17
+    noteFontSize: 16
+    actorFontSize: 18
+    mirrorActors: false
+---
+sequenceDiagram
+  autonumber
+  actor M as Administrador
+  participant T@{ "type": "boundary" } as AdminReportDetailScreen
+  participant A@{ "type": "control" } as routes/reportRoutes.js
+  participant R@{ "type": "entity" } as reportsRepository.js
+  participant O@{ "type": "control" } as services/moderation.js
+  participant L@{ "type": "entity" } as adminRepository.js
+  participant D@{ "type": "database" } as PostgreSQL
+  M->>T: abre a denúncia
+  T->>A: adminGetReport(id) → GET /admin/reports/:id
+  A->>R: get(id), describeTarget(type, id), listForTarget(...)
+  R->>D: SELECT reports / alvo
+  A-->>T: denúncia + conteúdo atual
+  M->>T: start()
+  T->>A: adminStartReport(id) → POST /admin/reports/:id/start
+  A->>R: startReview(id, adminId)
+  M->>T: decide('upheld', action) e confirma
+  T->>A: adminDecideReport(id, { decision, action, note })
+  A->>A: decideSchema.parse(req.body)
+  alt já decidida ou ação inválida
+    A-->>T: 409 / 400
+  else decisão válida
+    alt action = remove_content
+      A->>O: removeContent(adminId, { type, id, reason })
+    else action = warn_author
+      A->>O: warnUser(adminId, { userId, reason })
+    else action = deactivate_user
+      A->>O: deactivateUser(adminId, { userId, reason })
+    end
+    O->>L: logAction(adminId, ...)
+    A->>R: decide(id, { adminId, status, action, note })
+    A->>L: logAction(adminId, { action: 'report_upheld' })
+    opt remove_content ou deactivate_user
+      A->>R: closeOthersOnTarget(type, targetId, id, ...)
+    end
+    A->>D: repo.createNotification(reporterId, ...) para cada denunciante
+    A-->>T: 200 resultado
+    T-->>M: “Procedente · ação aplicada”
+  end

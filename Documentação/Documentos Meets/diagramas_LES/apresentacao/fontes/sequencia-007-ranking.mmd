@@ -1,0 +1,44 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  themeVariables:
+    fontSize: 18px
+  sequence:
+    showSequenceNumbers: true
+    wrap: false
+    messageFontSize: 17
+    noteFontSize: 16
+    actorFontSize: 18
+    mirrorActors: false
+---
+sequenceDiagram
+  autonumber
+  actor U as Usuário
+  participant T@{ "type": "boundary" } as RankingScreen
+  participant A@{ "type": "control" } as app.js GET /ranking
+  participant R@{ "type": "entity" } as analyticsRepository.js
+  participant C@{ "type": "control" } as services/scoring.js
+  participant D@{ "type": "database" } as PostgreSQL
+  U->>T: abre “Ranking” e escolhe o período
+  T->>A: getRanking(days)
+  A->>A: since = days > 0 ? Date.now() - days * 86400000 : null
+  A->>R: ranking({ since })
+  R->>D: SELECT presentation_ratings JOIN users WHERE u.status = 'active'
+  D-->>R: avaliações (estrelas e skills)
+  R->>R: agrupa por speaker_id
+  loop para cada apresentador
+    R->>C: summarizeSpeakerRatings(rows)
+    C-->>R: { overall, averageStars, averageSkills, totalRatings }
+  end
+  R->>C: rankSpeakers(entries)
+  C-->>R: lista com position
+  R-->>A: ranking
+  A-->>T: 200 { data }
+  alt lista vazia
+    T-->>U: “O ranking ainda não tem dados suficientes”
+  else com dados
+    T-->>U: pódio 🥇🥈🥉 e lista
+    U->>T: openSpeaker(item)
+    T-->>U: navigate('SpeakerProfile', { speakerId })
+  end

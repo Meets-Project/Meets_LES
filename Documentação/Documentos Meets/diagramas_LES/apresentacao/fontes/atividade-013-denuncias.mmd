@@ -1,0 +1,68 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  themeVariables:
+    edgeLabelBackground: '#ffffff'
+    fontSize: 22px
+  flowchart:
+    nodeSpacing: 28
+    rankSpacing: 46
+    wrappingWidth: 230
+    subGraphTitleMargin:
+      top: 10
+      bottom: 14
+---
+flowchart TB
+  subgraph L1[" "]
+    direction LR
+    ini(("Início"))
+    a1["<b>Administrador</b><br/>abre “Denúncias” (ou a notificação de nova denúncia)"]
+    s1["<b>Sistema</b><br/>lista as denúncias abertas com motivo, alvo e autor"]
+    a2["<b>Administrador</b><br/>abre uma denúncia"]
+    s2["<b>Sistema</b><br/>mostra detalhes, conteúdo atual e outras denúncias do alvo"]
+    d0{"Já decidida?"}
+    e0["<b>Sistema</b><br/>mostra o resultado (409)"]
+    f0((("Fim")))
+    a3["<b>Administrador</b><br/>inicia a análise (Em análise)"]
+    cA1(("A"))
+    ini --> a1 --> s1 --> a2 --> s2 --> d0
+    d0 -- sim --> e0 --> f0
+    d0 -- não --> a3 --> cA1
+  end
+  subgraph L2[" "]
+    direction LR
+    cA2(("A"))
+    d1{"Procedente?"}
+    a4["<b>Administrador</b><br/>marca Improcedente"]
+    a5["<b>Administrador</b><br/>escolhe a ação: remover, advertir ou desativar"]
+    d2{"Ação válida para o alvo?"}
+    e1["<b>Sistema</b><br/>pede outra ação"]
+    s3["<b>Sistema</b><br/>executa a ação (moderation)"]
+    s4["<b>Sistema</b><br/>registra a decisão e o log; se removeu ou desativou, fecha as outras denúncias do alvo"]
+    s5["<b>Sistema</b><br/>notifica denunciantes e autor"]
+    fim((("Fim")))
+    cA2 --> d1
+    d1 -- não --> a4 --> s4
+    d1 -- sim --> a5 --> d2
+    d2 -- não --> e1 --> a5
+    d2 -- sim --> s3 --> s4
+    s4 --> s5 --> fim
+  end
+  L1 ~~~ L2
+  class a1,a2,a3,a4,a5 adm
+  class s1,s2,e0,e1,s3,s4,s5 sis
+  class d0,d1,d2 dec
+  class ini ini
+  class f0,fim fim
+  class cA1,cA2 con
+  classDef org fill:#f0fdfa,stroke:#0d9488,color:#0f172a
+  classDef part fill:#fdf4ff,stroke:#c026d3,color:#0f172a
+  classDef sis fill:#eff6ff,stroke:#2563eb,color:#0f172a
+  classDef adm fill:#fff7ed,stroke:#ea580c,color:#0f172a
+  classDef dec fill:#fefce8,stroke:#ca8a04,color:#0f172a
+  classDef ini fill:#111827,stroke:#111827,color:#ffffff
+  classDef fim fill:#ffffff,stroke:#111827,stroke-width:4px,color:#111827
+  classDef con fill:#ffffff,stroke:#111827,color:#111827
+  style L1 fill:none,stroke:none
+  style L2 fill:none,stroke:none

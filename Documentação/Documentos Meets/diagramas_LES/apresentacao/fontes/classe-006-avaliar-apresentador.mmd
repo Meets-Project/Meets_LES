@@ -1,0 +1,69 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  class:
+    hideEmptyMembersBox: true
+---
+classDiagram
+  direction LR
+  class Usuario {
+    <<users>>
+    +uuid id
+    +varchar name
+  }
+  class Apresentacao {
+    <<posts type=presentation>>
+    +uuid id
+    +varchar presentation_id
+    +uuid mentioned_event_id
+    +date event_date
+    +time event_end_time
+  }
+  class Apresentador {
+    <<presentation_speakers>>
+    +varchar presentation_id
+    +uuid speaker_id
+  }
+  class AvaliacaoApresentacao {
+    <<presentation_ratings>>
+    +bigint id
+    +varchar presentation_id
+    +uuid post_id
+    +uuid rater_id
+    +uuid speaker_id
+    +numeric stars «1 a 5»
+    +jsonb skills «6 atributos, 0 a 99»
+    +varchar comment
+    +varchar visibility
+  }
+  class Repository {
+    <<repository.js>>
+    +listAvailablePresentations(userId)
+    +createRating(raterId, payload)
+    +getSpeakerRatingSummary(speakerId)
+  }
+  class Scoring {
+    <<services/scoring.js>>
+    +SKILL_KEYS
+    +summarizeSpeakerRatings(rows)
+  }
+  class Clock {
+    <<services/clock.js>>
+    +hasEnded(dateValue, timeValue)
+  }
+  Usuario "1" -- "0..*" Apresentador : é apresentador
+  Apresentacao "1" -- "1..*" Apresentador : vincula
+  Usuario "1" -- "0..*" AvaliacaoApresentacao : avalia (rater_id)
+  Usuario "1" -- "0..*" AvaliacaoApresentacao : é avaliado (speaker_id)
+  Apresentacao "1" -- "0..*" AvaliacaoApresentacao : refere-se a
+  Repository ..> AvaliacaoApresentacao : grava
+  Repository ..> Clock : apresentação terminou?
+  Repository ..> Scoring : calcula a pontuação
+  style Usuario fill:#fdf4ff,stroke:#c026d3
+  style Apresentacao fill:#f5f3ff,stroke:#7c3aed
+  style Apresentador fill:#faf5ff,stroke:#9333ea
+  style AvaliacaoApresentacao fill:#eef2ff,stroke:#4f46e5
+  style Repository fill:#ecfeff,stroke:#0891b2
+  style Scoring fill:#fff7ed,stroke:#ea580c
+  style Clock fill:#f0f9ff,stroke:#0284c7

@@ -1,0 +1,67 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  themeVariables:
+    fontSize: 22px
+  er:
+    entityPadding: 18
+---
+erDiagram
+  direction TB
+  users {
+    uuid id PK
+    varchar name
+    varchar email
+    varchar account_type
+    varchar status
+    timestamptz deactivated_at
+    uuid deactivated_by FK
+    varchar deactivation_reason
+  }
+  reports {
+    uuid id PK
+    uuid reporter_id FK
+    varchar target_type
+    uuid target_id
+    uuid target_owner_id FK
+    varchar target_preview
+    varchar reason
+    varchar details
+    varchar status
+    varchar action
+    varchar decision_note
+    uuid reviewed_by FK
+    timestamptz review_started_at
+    timestamptz decided_at
+    timestamptz created_at
+  }
+  admin_actions {
+    bigint id PK
+    uuid admin_id FK
+    varchar action
+    varchar target_type
+    text target_id
+    varchar note
+    timestamptz created_at
+  }
+  notifications {
+    bigint id PK
+    uuid user_id FK
+    varchar title
+    varchar body
+    timestamptz read_at
+    timestamptz created_at
+    varchar target_type
+    text target_id
+    text target_token
+  }
+  users ||--o{ reports : "reporter_id"
+  users ||--o{ reports : "target_owner_id"
+  users ||--o{ reports : "reviewed_by"
+  users ||--o{ admin_actions : "admin_id"
+  users ||--o{ notifications : "user_id"
+  style users fill:#fdf4ff,stroke:#c026d3
+  style reports fill:#fefce8,stroke:#ca8a04
+  style admin_actions fill:#fef2f2,stroke:#dc2626
+  style notifications fill:#fffbeb,stroke:#d97706

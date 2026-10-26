@@ -1,0 +1,50 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  themeVariables:
+    fontSize: 18px
+  sequence:
+    showSequenceNumbers: true
+    wrap: false
+    messageFontSize: 17
+    noteFontSize: 16
+    actorFontSize: 18
+    mirrorActors: false
+---
+sequenceDiagram
+  autonumber
+  actor U as Participante
+  participant T@{ "type": "boundary" } as EventRatingScreen
+  participant S@{ "type": "control" } as services/api.js
+  participant A@{ "type": "control" } as app.js POST /ratings/events
+  participant R@{ "type": "entity" } as repository.js
+  participant C@{ "type": "control" } as services/clock.js
+  participant D@{ "type": "database" } as PostgreSQL
+  U->>T: escolhe estrelas, comentário e visibilidade
+  U->>T: handleSubmit()
+  T->>S: createEventRating({ eventId, stars, comment, visibility })
+  S->>A: POST /ratings/events
+  A->>A: z.object({ eventId, stars: 1..5, ... }).parse(req.body)
+  alt dados inválidos
+    A-->>T: 400 Dados inválidos
+  else dados válidos
+    A->>R: createEventRating(req.auth.sub, data)
+    R->>D: SELECT ... FROM events WHERE id=$1
+    R->>D: SELECT 1 FROM event_participants WHERE event_id, user_id
+    R->>C: hasEnded(event_date, event_end_time)
+    alt não participou ou não terminou
+      R-->>A: Error FORBIDDEN
+      A-->>T: 403 “Você só pode avaliar um evento do qual participou...”
+    else pode avaliar
+      R->>D: INSERT INTO event_ratings ... ON CONFLICT(event_id, rater_id) DO UPDATE
+      D-->>R: avaliação
+      R-->>A: avaliação
+      A-->>S: 201 { data }
+      T->>S: getEventRatingSummary(eventId)
+      S->>R: GET /ratings/events/:eventId → getEventRatingSummary(eventId)
+      R->>D: SELECT stars, comment, visibility FROM event_ratings
+      R-->>T: { totalRatings, averageStars, recentRatings }
+      T-->>U: confirmação e média atualizada
+    end
+  end

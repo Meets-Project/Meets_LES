@@ -1,0 +1,49 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  themeVariables:
+    fontSize: 18px
+  sequence:
+    showSequenceNumbers: true
+    wrap: false
+    messageFontSize: 17
+    noteFontSize: 16
+    actorFontSize: 18
+    mirrorActors: false
+---
+sequenceDiagram
+  autonumber
+  actor U as Participante
+  participant T@{ "type": "boundary" } as PresentationRatingScreen
+  participant S@{ "type": "control" } as ratingsStorage / api.js
+  participant A@{ "type": "control" } as app.js /ratings
+  participant R@{ "type": "entity" } as repository.js
+  participant C@{ "type": "control" } as clock.js / scoring.js
+  participant D@{ "type": "database" } as PostgreSQL
+  T->>S: getAvailablePresentations()
+  S->>A: GET /ratings/available
+  A->>R: listAvailablePresentations(userId)
+  R->>D: SELECT apresentações encerradas de eventos que participou
+  R-->>T: lista
+  U->>T: handleSelectPresentation(item) e handleSkillSet(skillId, valor)
+  U->>T: handleSubmit()
+  T->>S: savePresentationRating(payload) → createPresentationRating
+  S->>A: POST /ratings/presentations
+  A->>A: z.object({ stars: 1..5, skills: 0..99 x6 }).parse(req.body)
+  A->>R: createRating(req.auth.sub, data)
+  R->>D: SELECT ... FROM posts (apresentação)
+  R->>C: hasEnded(event_date, event_end_time)
+  R->>D: SELECT 1 FROM event_participants (evento vinculado)
+  R->>D: SELECT 1 FROM presentation_speakers (apresentador vinculado)
+  alt não terminou, não participou, não vinculado ou avalia a si mesmo
+    R-->>A: Error FORBIDDEN / SELF_RATING / SPEAKER_NOT_LINKED
+    A-->>T: 403 / 400 com a mensagem
+  else pode avaliar
+    R->>D: INSERT INTO presentation_ratings ... ON CONFLICT(presentation_id, rater_id, speaker_id) DO UPDATE
+    D-->>R: avaliação
+    R-->>A: avaliação
+    A-->>T: 201 { data }
+    T-->>U: “Avaliação salva com sucesso!” e navigation.goBack()
+    Note over R,C: a pontuação geral é calculada na leitura:<br/>summarizeSpeakerRatings(rows) no ranking (#007) e no perfil
+  end

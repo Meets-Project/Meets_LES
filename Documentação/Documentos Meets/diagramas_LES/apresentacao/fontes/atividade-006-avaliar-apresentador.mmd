@@ -1,0 +1,67 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  themeVariables:
+    edgeLabelBackground: '#ffffff'
+    fontSize: 22px
+  flowchart:
+    nodeSpacing: 28
+    rankSpacing: 46
+    wrappingWidth: 230
+    subGraphTitleMargin:
+      top: 10
+      bottom: 14
+---
+flowchart TB
+  subgraph L1[" "]
+    direction LR
+    ini(("Início"))
+    a1["<b>Participante</b><br/>abre “Avaliar” pelo lembrete ou pela lista de apresentações"]
+    d1{"Apresentação encerrada?"}
+    e1["<b>Sistema</b><br/>informa que a avaliação libera após o horário de fim"]
+    d2{"Participou do evento vinculado?"}
+    e2["<b>Sistema</b><br/>informa que só quem participou pode avaliar"]
+    f1((("Fim")))
+    a2["<b>Sistema</b><br/>exibe os apresentadores vinculados, as estrelas e os 6 atributos (0 a 99)"]
+    cA1(("A"))
+    ini --> a1 --> d1
+    d1 -- não --> e1 --> f1
+    d1 -- sim --> d2
+    d2 -- não --> e2 --> f1
+    d2 -- sim --> a2 --> cA1
+  end
+  subgraph L2[" "]
+    direction LR
+    cA2(("A"))
+    a3["<b>Participante</b><br/>escolhe o apresentador, dá estrelas e notas e confirma"]
+    d3{"Avaliando a si mesmo?"}
+    e3["<b>Sistema</b><br/>recusa: ninguém avalia a si mesmo"]
+    d4{"Notas dentro da escala?"}
+    e4["<b>Sistema</b><br/>pede correção"]
+    a4["<b>Sistema</b><br/>registra a avaliação"]
+    a5["<b>Sistema</b><br/>recalcula médias por atributo e a pontuação geral (ranking)"]
+    fim((("Fim")))
+    cA2 --> a3 --> d3
+    d3 -- sim --> e3 --> a3
+    d3 -- não --> d4
+    d4 -- não --> e4 --> a3
+    d4 -- sim --> a4 --> a5 --> fim
+  end
+  L1 ~~~ L2
+  class a1,a3 part
+  class e1,e2,a2,e3,e4,a4,a5 sis
+  class d1,d2,d3,d4 dec
+  class ini ini
+  class f1,fim fim
+  class cA1,cA2 con
+  classDef org fill:#f0fdfa,stroke:#0d9488,color:#0f172a
+  classDef part fill:#fdf4ff,stroke:#c026d3,color:#0f172a
+  classDef sis fill:#eff6ff,stroke:#2563eb,color:#0f172a
+  classDef adm fill:#fff7ed,stroke:#ea580c,color:#0f172a
+  classDef dec fill:#fefce8,stroke:#ca8a04,color:#0f172a
+  classDef ini fill:#111827,stroke:#111827,color:#ffffff
+  classDef fim fill:#ffffff,stroke:#111827,stroke-width:4px,color:#111827
+  classDef con fill:#ffffff,stroke:#111827,color:#111827
+  style L1 fill:none,stroke:none
+  style L2 fill:none,stroke:none

@@ -1,0 +1,44 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  themeVariables:
+    edgeLabelBackground: '#ffffff'
+    fontSize: 26px
+  flowchart:
+    nodeSpacing: 30
+    rankSpacing: 30
+    wrappingWidth: 190
+    subGraphTitleMargin:
+      top: 10
+      bottom: 16
+---
+flowchart TB
+  subgraph FLUXO["Como um evento é organizado hoje (sem o Meets)"]
+    direction LR
+    A["<b>Organizador</b><br/>cria o convite<br/>(texto ou imagem)"]
+    B["<b>Organizador</b><br/>divulga em grupos de mensagem e pessoa a pessoa"]
+    C["<b>Participante</b><br/>recebe o convite<br/>(se estiver no grupo) ⚠1"]
+    D["<b>Participante</b><br/>responde “eu vou” na conversa"]
+    E["<b>Organizador</b><br/>anota quem vai numa planilha ⚠2"]
+    F["<b>Todos</b><br/>evento e palestras acontecem"]
+    G["<b>Organizador</b><br/>pergunta “o que acharam?” ⚠3 ⚠4"]
+    A --> B --> C --> D --> E --> F --> G
+  end
+  subgraph PROB["Problemas"]
+    direction LR
+    P1["⚠1 O convite não chega a todos e se perde no meio das mensagens"]
+    P2["⚠2 Lista desatualizada, sem histórico de quem participou"]
+    P3["⚠3 Opinião solta: sem nota nem critério para avaliar os apresentadores"]
+    P4["⚠4 Nenhuma métrica de engajamento para melhorar os próximos eventos"]
+    P1 ~~~ P2 ~~~ P3 ~~~ P4
+  end
+  FLUXO ~~~ PROB
+  classDef org fill:#f0fdfa,stroke:#0d9488,color:#0f172a
+  classDef part fill:#fdf4ff,stroke:#c026d3,color:#0f172a
+  classDef todos fill:#eff6ff,stroke:#2563eb,color:#0f172a
+  classDef prob fill:#fef2f2,stroke:#dc2626,color:#991b1b
+  class A,B,E,G org
+  class C,D part
+  class F todos
+  class P1,P2,P3,P4 prob

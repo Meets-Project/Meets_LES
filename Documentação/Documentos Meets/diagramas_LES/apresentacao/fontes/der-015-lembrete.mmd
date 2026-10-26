@@ -1,0 +1,71 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  themeVariables:
+    fontSize: 22px
+  er:
+    entityPadding: 18
+---
+erDiagram
+  direction TB
+  users {
+    uuid id PK
+    varchar name
+    varchar email
+    varchar account_type
+    varchar status
+  }
+  settings {
+    uuid user_id PK,FK
+    boolean notifications_enabled
+  }
+  events {
+    uuid id PK
+    uuid author_id FK
+    varchar title
+    date event_date
+    time event_end_time
+    text share_token
+  }
+  event_participants {
+    uuid event_id PK,FK
+    uuid user_id PK,FK
+    varchar status
+    timestamptz created_at
+  }
+  posts {
+    uuid id PK
+    uuid author_id FK
+    varchar type
+    varchar title
+    varchar presentation_id
+    uuid mentioned_event_id FK
+    date event_date
+    time event_end_time
+    text share_token
+  }
+  notifications {
+    bigint id PK
+    uuid user_id FK
+    varchar title
+    varchar body
+    timestamptz read_at
+    timestamptz created_at
+    varchar target_type
+    text target_id
+    text target_token
+  }
+  users ||--|| settings : "user_id"
+  users ||--o{ events : "author_id"
+  events ||--o{ event_participants : "event_id"
+  users ||--o{ event_participants : "user_id"
+  users ||--o{ posts : "author_id"
+  events ||--o{ posts : "mentioned_event_id"
+  users ||--o{ notifications : "user_id"
+  style users fill:#fdf4ff,stroke:#c026d3
+  style settings fill:#f8fafc,stroke:#64748b
+  style events fill:#f0fdf4,stroke:#16a34a
+  style event_participants fill:#f7fee7,stroke:#65a30d
+  style posts fill:#ecfeff,stroke:#0891b2
+  style notifications fill:#fffbeb,stroke:#d97706

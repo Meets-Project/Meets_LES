@@ -1,0 +1,71 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  themeVariables:
+    fontSize: 22px
+    edgeLabelBackground: "#ffffff"
+  flowchart:
+    nodeSpacing: 26
+    rankSpacing: 46
+---
+flowchart TB
+  USUARIO["USUÁRIO"]
+  a1(["<u>id</u>"])
+  a1 --- USUARIO
+  a2(["nome"])
+  a2 --- USUARIO
+  a3(["situação"])
+  a3 --- USUARIO
+  a4(["pontuação geral"])
+  a4 --- USUARIO
+  a5(["posição no ranking"])
+  a5 --- USUARIO
+  PERFIL["PERFIL"]
+  a6(["cargo"])
+  PERFIL --- a6
+  a7(["foto"])
+  PERFIL --- a7
+  APRES["APRESENTAÇÃO"]
+  a8(["<u>id</u>"])
+  APRES --- a8
+  a9(["título"])
+  APRES --- a9
+  r1{"possui"}
+  USUARIO ---|"1"| r1
+  r1 ---|"1"| PERFIL
+  r2{"apresenta"}
+  USUARIO ---|"N"| r2
+  r2 ---|"N"| APRES
+  r3{"avalia"}
+  USUARIO ---|"N"| r3
+  r3 ---|"N"| APRES
+  a10(["estrelas"])
+  r3 --- a10
+  a11(["atributos (6)"])
+  r3 --- a11
+  a12(["data"])
+  r3 --- a12
+  classDef atr fill:#ffffff,stroke:#475569,color:#0f172a
+  classDef rel fill:#fefce8,stroke:#a16207,color:#0f172a
+  style USUARIO fill:#fdf4ff,stroke:#c026d3,stroke-width:3px
+  class a1 atr
+  class a2 atr
+  class a3 atr
+  class a4 atr
+  style a4 stroke-dasharray:6 4
+  class a5 atr
+  style a5 stroke-dasharray:6 4
+  style PERFIL fill:#fff7ed,stroke:#ea580c,stroke-width:3px
+  class a6 atr
+  class a7 atr
+  style APRES fill:#f5f3ff,stroke:#7c3aed,stroke-width:3px
+  class a8 atr
+  class a9 atr
+  class r1 rel
+  class r2 rel
+  class r3 rel
+  class a10 atr
+  class a11 atr
+  style a11 stroke-width:5px
+  class a12 atr
