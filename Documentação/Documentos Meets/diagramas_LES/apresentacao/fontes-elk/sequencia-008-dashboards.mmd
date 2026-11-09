@@ -1,0 +1,48 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  themeVariables:
+    fontSize: 18px
+  sequence:
+    showSequenceNumbers: true
+    wrap: false
+    messageFontSize: 17
+    noteFontSize: 16
+    actorFontSize: 18
+    mirrorActors: false
+---
+sequenceDiagram
+  autonumber
+  actor U as Usuário / Administrador
+  participant T@{ "type": "boundary" } as DashboardScreen
+  participant A@{ "type": "control" } as app.js GET /dashboard
+  participant R@{ "type": "entity" } as analyticsRepository.js
+  participant D@{ "type": "database" } as PostgreSQL
+  Note over U,D: FP = fluxo principal · FA = fluxo alternativo (volta ao principal) · FE = exceção (encerra o caso)
+  U->>T: FilterChips onChange={setScope} / {setPeriod} → load()
+  T->>A: getDashboard({ scope, days: Number(period) }) → GET /dashboard
+  alt FE1 · visão da plataforma sem ser administrador
+    A-->>T: 403 { code: 'ADMIN_ONLY' }
+    T-->>U: setError(error.message)
+  else FP · escopo permitido (meu conteúdo ou plataforma pelo admin)
+    A->>R: dashboard({ scope, ownerId: req.auth.sub, since })
+    par painéis em paralelo
+      R->>D: postsBlock(params)
+    and
+      R->>D: eventsBlock(params)
+    and
+      R->>D: ratingsBlock(params)
+    and
+      R->>R: presentersBlock({ since, ownerId })
+    end
+    D-->>R: contagens e linhas
+    opt FA1 · administrador escolheu a plataforma: indicadores da comunidade
+      R->>D: activeUsers, deactivatedUsers, newUsers, openReports
+      R->>R: result.community = { ... }
+    end
+    R-->>A: { scope, posts, events, ratings, presenters, community? }
+    A-->>T: 200 { data }
+    T-->>U: setData(data) → Tile, HBars, MonthColumns, TopList
+    Note over U,T: FA2 · sem dados no período: os painéis mostram zero
+  end

@@ -1,0 +1,245 @@
+---
+config:
+  layout: elk
+  elk:
+    nodePlacementStrategy: NETWORK_SIMPLEX
+  look: neo
+  theme: redux-color
+  themeVariables:
+    fontSize: 22px
+    edgeLabelBackground: "#ffffff"
+  flowchart:
+    nodeSpacing: 26
+    rankSpacing: 46
+---
+flowchart TB
+  USUARIO["USUÁRIO"]
+  a1(["<u>id</u>"])
+  USUARIO --- a1
+  a2(["nome"])
+  USUARIO --- a2
+  a3(["e-mail"])
+  USUARIO --- a3
+  a4(["tipo"])
+  USUARIO --- a4
+  a5(["situação"])
+  USUARIO --- a5
+  PERFIL["PERFIL"]
+  a6(["cargo"])
+  PERFIL --- a6
+  a7(["foto"])
+  PERFIL --- a7
+  a8(["biografia"])
+  PERFIL --- a8
+  CONFIG["CONFIGURAÇÃO"]
+  a9(["notificações ligadas"])
+  CONFIG --- a9
+  POST["POST"]
+  a10(["<u>id</u>"])
+  POST --- a10
+  a11(["conteúdo"])
+  POST --- a11
+  a12(["visibilidade"])
+  POST --- a12
+  APRES["APRESENTAÇÃO"]
+  a13(["início"])
+  APRES --- a13
+  a14(["fim"])
+  APRES --- a14
+  EVENTO["EVENTO"]
+  a15(["<u>id</u>"])
+  EVENTO --- a15
+  a16(["título"])
+  EVENTO --- a16
+  a17(["data"])
+  EVENTO --- a17
+  a18(["local"])
+  EVENTO --- a18
+  a19(["horário de fim"])
+  EVENTO --- a19
+  COMENT["COMENTÁRIO"]
+  a20(["<u>id</u>"])
+  COMENT --- a20
+  DENUNCIA["DENÚNCIA"]
+  a21(["<u>id</u>"])
+  DENUNCIA --- a21
+  a22(["motivo"])
+  DENUNCIA --- a22
+  a23(["situação"])
+  DENUNCIA --- a23
+  a24(["ação"])
+  DENUNCIA --- a24
+  NOTIF["NOTIFICAÇÃO"]
+  a25(["<u>id</u>"])
+  NOTIF --- a25
+  CONVERSA["CONVERSA"]
+  a26(["<u>id</u>"])
+  CONVERSA --- a26
+  MSG["MENSAGEM"]
+  a27(["<u>id</u>"])
+  MSG --- a27
+  ACAO["AÇÃO ADMINISTRATIVA"]
+  a28(["ação"])
+  ACAO --- a28
+  a29(["data"])
+  ACAO --- a29
+  r1{"possui"}
+  USUARIO ---|"1"| r1
+  r1 ---|"1"| PERFIL
+  r2{"define"}
+  USUARIO ---|"1"| r2
+  r2 ---|"1"| CONFIG
+  r3{"publica"}
+  USUARIO ---|"1"| r3
+  r3 ---|"N"| POST
+  r4{"organiza"}
+  USUARIO ---|"1"| r4
+  r4 ---|"N"| EVENTO
+  r5{"segue"}
+  USUARIO ---|"N"| r5
+  r5 ---|"N"| USUARIO
+  r6{"curte"}
+  USUARIO ---|"N"| r6
+  r6 ---|"N"| POST
+  r7{"curte"}
+  USUARIO ---|"N"| r7
+  r7 ---|"N"| EVENTO
+  r8{"salva"}
+  USUARIO ---|"N"| r8
+  r8 ---|"N"| POST
+  r9{"favorita"}
+  USUARIO ---|"N"| r9
+  r9 ---|"N"| POST
+  r10{"salva"}
+  USUARIO ---|"N"| r10
+  r10 ---|"N"| EVENTO
+  r11{"participa"}
+  USUARIO ---|"N"| r11
+  r11 ---|"N"| EVENTO
+  a30(["situação (host/confirmada)"])
+  r11 --- a30
+  r12{"escreve"}
+  USUARIO ---|"1"| r12
+  r12 ---|"N"| COMENT
+  r13{"sobre"}
+  COMENT ---|"N"| r13
+  r13 ---|"0..1"| POST
+  r14{"sobre"}
+  COMENT ---|"N"| r14
+  r14 ---|"0..1"| EVENTO
+  r15{"compartilha"}
+  USUARIO ---|"N"| r15
+  r15 ---|"N"| POST
+  r16{"é um"}
+  APRES ---|"1"| r16
+  r16 ---|"1"| POST
+  r17{"acontece em"}
+  APRES ---|"N"| r17
+  r17 ---|"0..1"| EVENTO
+  r18{"apresenta"}
+  USUARIO ---|"N"| r18
+  r18 ---|"N"| APRES
+  r19{"avalia"}
+  USUARIO ---|"N"| r19
+  r19 ---|"N"| EVENTO
+  a31(["estrelas"])
+  r19 --- a31
+  r20{"avalia"}
+  USUARIO ---|"N"| r20
+  r20 ---|"N"| APRES
+  a32(["estrelas"])
+  r20 --- a32
+  a33(["atributos (6)"])
+  r20 --- a33
+  r21{"denuncia"}
+  USUARIO ---|"1"| r21
+  r21 ---|"N"| DENUNCIA
+  r22{"analisa"}
+  USUARIO ---|"0..1 (admin)"| r22
+  r22 ---|"N"| DENUNCIA
+  r23{"recebe"}
+  USUARIO ---|"1"| r23
+  r23 ---|"N"| NOTIF
+  r24{"participa"}
+  USUARIO ---|"2"| r24
+  r24 ---|"N"| CONVERSA
+  r25{"contém"}
+  CONVERSA ---|"1"| r25
+  r25 ---|"N"| MSG
+  r26{"realiza"}
+  USUARIO ---|"1 (admin)"| r26
+  r26 ---|"N"| ACAO
+  classDef atr fill:#ffffff,stroke:#475569,color:#0f172a
+  classDef rel fill:#fefce8,stroke:#a16207,color:#0f172a
+  style USUARIO fill:#fdf4ff,stroke:#c026d3,stroke-width:3px
+  class a1 atr
+  class a2 atr
+  class a3 atr
+  class a4 atr
+  class a5 atr
+  style PERFIL fill:#fff7ed,stroke:#ea580c,stroke-width:3px
+  class a6 atr
+  class a7 atr
+  class a8 atr
+  style CONFIG fill:#f8fafc,stroke:#64748b,stroke-width:3px
+  class a9 atr
+  style POST fill:#ecfeff,stroke:#0891b2,stroke-width:3px
+  class a10 atr
+  class a11 atr
+  class a12 atr
+  style APRES fill:#f5f3ff,stroke:#7c3aed,stroke-width:3px
+  class a13 atr
+  class a14 atr
+  style EVENTO fill:#f0fdf4,stroke:#16a34a,stroke-width:3px
+  class a15 atr
+  class a16 atr
+  class a17 atr
+  class a18 atr
+  class a19 atr
+  style COMENT fill:#f0f9ff,stroke:#0284c7,stroke-width:3px
+  class a20 atr
+  style DENUNCIA fill:#fefce8,stroke:#ca8a04,stroke-width:3px
+  class a21 atr
+  class a22 atr
+  class a23 atr
+  class a24 atr
+  style NOTIF fill:#fffbeb,stroke:#d97706,stroke-width:3px
+  class a25 atr
+  style CONVERSA fill:#f0fdfa,stroke:#0d9488,stroke-width:3px
+  class a26 atr
+  style MSG fill:#f0fdfa,stroke:#0d9488,stroke-width:3px
+  class a27 atr
+  style ACAO fill:#fef2f2,stroke:#dc2626,stroke-width:3px
+  class a28 atr
+  class a29 atr
+  class r1 rel
+  class r2 rel
+  class r3 rel
+  class r4 rel
+  class r5 rel
+  class r6 rel
+  class r7 rel
+  class r8 rel
+  class r9 rel
+  class r10 rel
+  class r11 rel
+  class a30 atr
+  class r12 rel
+  class r13 rel
+  class r14 rel
+  class r15 rel
+  class r16 rel
+  class r17 rel
+  class r18 rel
+  class r19 rel
+  class a31 atr
+  class r20 rel
+  class a32 atr
+  class a33 atr
+  style a33 stroke-width:5px
+  class r21 rel
+  class r22 rel
+  class r23 rel
+  class r24 rel
+  class r25 rel
+  class r26 rel

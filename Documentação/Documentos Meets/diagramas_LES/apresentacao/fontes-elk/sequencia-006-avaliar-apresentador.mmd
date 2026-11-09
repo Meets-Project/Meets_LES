@@ -1,0 +1,52 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  themeVariables:
+    fontSize: 18px
+  sequence:
+    showSequenceNumbers: true
+    wrap: false
+    messageFontSize: 17
+    noteFontSize: 16
+    actorFontSize: 18
+    mirrorActors: false
+---
+sequenceDiagram
+  autonumber
+  actor U as Participante
+  participant T@{ "type": "boundary" } as PresentationRatingScreen
+  participant S@{ "type": "control" } as ratingsStorage / api.js
+  participant A@{ "type": "control" } as app.js /ratings
+  participant R@{ "type": "entity" } as repository.js
+  participant C@{ "type": "control" } as clock.js / scoring.js
+  participant D@{ "type": "database" } as PostgreSQL
+  Note over U,D: FP = fluxo principal · FA = fluxo alternativo (volta ao principal) · FE = exceção (encerra o caso)
+  T->>S: getAvailablePresentations()
+  S->>A: GET /ratings/available
+  A->>R: listAvailablePresentations(userId)
+  R->>D: SELECT posts JOIN event_participants (apresentações)
+  R-->>T: lista
+  U->>T: handleSelectPresentation(item), setStars(value), handleSkillSet(skillId, value)
+  U->>T: handleSubmit()
+  Note over U,T: FA1 · estrelas fora de 1–5 ou sem apresentador:<br/>setFeedback(mensagem) e volta ao formulário
+  T->>S: savePresentationRating(payload) → createPresentationRating
+  S->>A: POST /ratings/presentations
+  A->>A: z.object({ stars: 1..5, skills: 0..99 x6 }).parse(req.body)
+  A->>R: createRating(req.auth.sub, data)
+  R->>D: SELECT ... FROM posts (apresentação)
+  R->>C: hasEnded(event_date, event_end_time)
+  R->>D: SELECT 1 FROM event_participants (evento vinculado)
+  R->>D: SELECT 1 FROM presentation_speakers (apresentador vinculado)
+  alt FE1 · não terminou, não participou, apresentador não vinculado ou autoavaliação
+    R-->>A: Error FORBIDDEN / SELF_RATING / SPEAKER_NOT_LINKED
+    A-->>T: 403 / 400 { message } → setFeedback(error.message)
+  else FP · pode avaliar
+    R->>D: INSERT INTO presentation_ratings ... ON CONFLICT(presentation_id, rater_id, speaker_id) DO UPDATE
+    Note over R,D: FA2 · já avaliou este apresentador: ON CONFLICT DO UPDATE<br/>substitui a avaliação anterior
+    D-->>R: avaliação
+    R-->>A: avaliação
+    A-->>T: 201 { data }
+    T-->>U: setFeedback('Avaliação salva com sucesso!') e navigation.goBack()
+    Note over R,C: a pontuação geral é calculada na leitura:<br/>summarizeSpeakerRatings(rows) no ranking (#007) e no perfil
+  end

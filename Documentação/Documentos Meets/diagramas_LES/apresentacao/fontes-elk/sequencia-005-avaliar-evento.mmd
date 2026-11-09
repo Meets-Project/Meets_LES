@@ -1,0 +1,54 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  themeVariables:
+    fontSize: 18px
+  sequence:
+    showSequenceNumbers: true
+    wrap: false
+    messageFontSize: 17
+    noteFontSize: 16
+    actorFontSize: 18
+    mirrorActors: false
+---
+sequenceDiagram
+  autonumber
+  actor U as Participante
+  participant T@{ "type": "boundary" } as EventRatingScreen
+  participant S@{ "type": "control" } as services/api.js
+  participant A@{ "type": "control" } as app.js POST /ratings/events
+  participant R@{ "type": "entity" } as repository.js
+  participant C@{ "type": "control" } as services/clock.js
+  participant D@{ "type": "database" } as PostgreSQL
+  Note over U,D: FP = fluxo principal · FA = fluxo alternativo (volta ao principal) · FE = exceção (encerra o caso)
+  U->>T: setRating(star), setComment(text), setVisibility(option)
+  U->>T: handleSubmit()
+  Note over U,T: FA1 · nota inválida: rating < 1 || rating > 5<br/>→ Alert 'Avaliação inválida' e volta à escolha
+  T->>S: createEventRating({ eventId, stars, comment, visibility })
+  S->>A: POST /ratings/events
+  A->>A: z.object({ eventId, stars: 1..5, ... }).parse(req.body)
+  alt FE1 · dados inválidos (Zod): o caso termina
+    A-->>T: 400 { message: 'Dados inválidos.' } (ZodError)
+  else FP · dados válidos
+    A->>R: createEventRating(req.auth.sub, data)
+    R->>D: SELECT ... FROM events WHERE id=$1
+    R->>D: SELECT 1 FROM event_participants WHERE event_id, user_id
+    R->>C: hasEnded(event_date, event_end_time)
+    alt FE2 · não participou ou o evento não terminou
+      R-->>A: Error FORBIDDEN
+      A-->>T: 403 “Você só pode avaliar um evento do qual participou...”
+    else FP · pode avaliar
+      R->>D: INSERT INTO event_ratings ... ON CONFLICT(event_id, rater_id) DO UPDATE
+      Note over R,D: FA2 · já avaliou: ON CONFLICT DO UPDATE<br/>substitui a avaliação anterior (uma por pessoa)
+      D-->>R: avaliação
+      R-->>A: avaliação
+      A-->>S: 201 { data }
+      T->>S: getEventRatingSummary(eventId)
+      S->>A: GET /ratings/events/:eventId
+      A->>R: getEventRatingSummary(eventId)
+      R->>D: SELECT stars, comment, visibility FROM event_ratings
+      R-->>T: { totalRatings, averageStars, recentRatings }
+      T-->>U: setSummary(fresh) e Alert.alert('Avaliação enviada')
+    end
+  end

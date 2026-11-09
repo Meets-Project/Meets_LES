@@ -1,0 +1,44 @@
+---
+config:
+  look: neo
+  theme: redux-color
+  themeVariables:
+    fontSize: 18px
+  sequence:
+    showSequenceNumbers: true
+    wrap: false
+    messageFontSize: 17
+    noteFontSize: 16
+    actorFontSize: 18
+    mirrorActors: false
+---
+sequenceDiagram
+  autonumber
+  participant G@{ "type": "control" } as server.js (Agendador)
+  participant D@{ "type": "database" } as PostgreSQL
+  actor P as Participante
+  participant T@{ "type": "boundary" } as AppNavigation / NotificationsDrawer
+  participant A@{ "type": "control" } as app.js GET /notifications
+  participant R@{ "type": "entity" } as repository.js
+  Note over G,R: FP = fluxo principal · FA = fluxo alternativo (volta ao principal) · FE = exceção (encerra o caso)
+  loop FP · setInterval(notifyFinished, 60_000)
+    G->>D: notifyFinished(): INSERT INTO notifications ... SELECT
+    Note over G,D: fim já passou (NOW() AT TIME ZONE APP_TIMEZONE) → cria o lembrete<br/>FA1 · lembrete já enviado (NOT EXISTS) ou notificações desligadas: ignora<br/>FE1 · falha na rotina: catch → console.error, tenta no próximo ciclo
+  end
+  P->>T: AppNavigation useEffect / abre NotificationsDrawer
+  T->>A: getNotifications()
+  A->>R: listNotifications(userId)
+  R->>R: ensureRatingNotifications(userId)
+  R->>D: SELECT eventos e apresentações do participante
+  R->>R: hasEnded(event_date, event_end_time)
+  opt FA2 · garantia ao consultar: terminou e ainda sem lembrete
+    R->>D: createNotification(userId, { targetType: 'event-rating' })
+  end
+  R->>D: SELECT ... FROM notifications LIMIT 50
+  D-->>R: notificações
+  R-->>A: lista
+  A-->>T: 200 { data }
+  T-->>P: setNotifications(lista) → NotificationsDrawer
+  P->>T: onPress={() => handleNotificationPress(item.id)}
+  T->>A: markNotificationRead(id)
+  T-->>P: navigate('EventRating', { eventId: target_id })
