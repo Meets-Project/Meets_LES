@@ -17,6 +17,7 @@ from PIL import Image
 import gerar_slides as g
 from codigo import CODIGO
 from codigo_curto import CURTO
+from fluxos import FLUXOS
 
 TOTAL = 31
 g.TOTAL = TOTAL
@@ -38,14 +39,21 @@ ARQ = {
 UM_CELULAR = {'#015', '#007'}
 
 CSS = g.CSS + """
-.lado { position: absolute; left: 92px; top: 182px; width: 1000px; }
-.lado .desc { font-size: 21px; line-height: 1.45; color: #292524; margin-bottom: 20px; }
-.lado .rf { position: static; padding: 18px 26px; border-radius: 14px; margin-bottom: 22px; }
-.lado .rf h2 { font-size: 25px; margin: 6px 0 4px; }
-.lado .rf p { font-size: 18.5px; line-height: 1.4; }
-.lado h3 { font-size: 14px; font-weight: 800; letter-spacing: 2.4px; color: #b4383b; margin: 0 0 10px; }
-.lado .item { grid-template-columns: 76px 1fr; gap: 10px; margin-bottom: 11px; font-size: 17px; line-height: 1.38; }
-.lado .bloco { margin-bottom: 16px; }
+.lado { position: absolute; left: 80px; top: 168px; width: 600px; }
+.lado2 { position: absolute; left: 710px; top: 168px; width: 590px; }
+.desc { font-size: 18px; line-height: 1.42; color: #292524; margin-bottom: 14px; }
+.lado h3, .lado2 h3 { font-size: 12.5px; font-weight: 800; letter-spacing: 2.2px; color: #b4383b; margin: 0 0 7px; }
+.fp { margin: 0 0 12px 0; padding-left: 22px; font-size: 15.8px; line-height: 1.36; color: #292524; }
+.fp li { margin-bottom: 3px; }
+.fl { display: grid; grid-template-columns: 44px 1fr; gap: 8px; margin-bottom: 6px; font-size: 15.8px; line-height: 1.36; color: #292524; }
+.fl b { color: #fff; background: #2563eb; border-radius: 6px; text-align: center; font-size: 12px; padding: 2px 0; height: fit-content; }
+.fl.fe b { background: #dc2626; }
+.lado2 .rf { position: static; padding: 12px 18px; border-radius: 12px; margin-bottom: 14px; }
+.lado2 .rf .k { font-size: 11.5px; }
+.lado2 .rf h2 { font-size: 19px; margin: 4px 0 3px; }
+.lado2 .rf p { font-size: 15.6px; line-height: 1.38; }
+.lado2 .item { grid-template-columns: 62px 1fr; gap: 8px; margin-bottom: 7px; font-size: 15.2px; line-height: 1.35; }
+.bloco { margin-bottom: 12px; }
 .par { position: absolute; left: 52px; right: 52px; top: 82px; bottom: 44px; display: flex; gap: 22px; }
 .par.col { flex-direction: column; }
 .cel { flex: 1; min-width: 0; min-height: 0; background: #fff; border: 1px solid #ede7e4; border-radius: 18px;
@@ -85,10 +93,18 @@ def slide_a(n, caso):
     desc = UC_ID[caso]['descricao']
     itens_rn = ''.join(f'<div class="item"><b>{r}</b><span>{html.escape(g.RN_ID[r][1])}</span></div>' for r in rns)
     itens_rnf = ''.join(f'<div class="item"><b>{r}</b><span>{html.escape(g.RNF_ID[r][3])}</span></div>' for r in rnfs)
-    corpo = (f'<div class="cab2"><div class="kicker">Capítulo {num} · Caso de uso {caso}</div>'
-             f'<div class="titulo">{html.escape(nome)}</div></div><div class="selo selo2">Tela e requisitos</div>'
+    fl = FLUXOS[caso]
+    fp = ''.join(f'<li>{html.escape(p.rstrip(";."))}</li>' for p in UC_ID[caso]['fluxo'])
+    fa = ''.join(f'<div class="fl"><b>{k}</b><span>{html.escape(t)}</span></div>' for k, t in fl['fa'])
+    fe = ''.join(f'<div class="fl fe"><b>{k}</b><span>{html.escape(t)}</span></div>' for k, t in fl['fe'])
+    corpo = (f'<div class="cab2" style="top:44px"><div class="kicker">Capítulo {num} · Caso de uso {caso}</div>'
+             f'<div class="titulo" style="font-size:46px">{html.escape(nome)}</div></div>'
+             f'<div class="selo selo2" style="top:48px">Tela, fluxos e requisitos</div>'
              f'<div class="lado"><div class="desc">{html.escape(desc)}</div>'
-             f'<div class="rf"><div class="k">REQUISITO FUNCIONAL · {rf_id} · PRIORIDADE {prio.upper()}</div>'
+             f'<h3>FLUXO PRINCIPAL (FP)</h3><ol class="fp">{fp}</ol>'
+             f'<h3>FLUXOS ALTERNATIVOS (FA)</h3><div class="bloco">{fa}</div>'
+             f'<h3>EXCEÇÕES (FE)</h3><div class="bloco">{fe}</div></div>'
+             f'<div class="lado2"><div class="rf"><div class="k">REQUISITO FUNCIONAL · {rf_id} · PRIORIDADE {prio.upper()}</div>'
              f'<h2>{html.escape(rf_nome)}</h2><p>{html.escape(esp)}</p></div>'
              f'<div class="bloco"><h3>REGRAS DE NEGÓCIO</h3>{itens_rn}</div>'
              f'<div class="bloco"><h3>REQUISITOS NÃO FUNCIONAIS</h3>{itens_rnf}</div></div>')
