@@ -13,8 +13,18 @@ var doc=mxUtils.parseXml(xml);var v=new GraphViewer(d,doc.documentElement,{highl
 window.__done=1;}
 </script></body></html>""" % VIEWER
 
+def escala_para(css_w, css_h):
+    """Escala do PNG em alta: lado maior até LADO_MAX px e no máximo AREA_MAX pixels."""
+    lado = float(os.environ.get('LADO_MAX', 0))
+    if not lado:
+        return 2
+    area = float(os.environ.get('AREA_MAX', 20e6))
+    return min(lado / max(css_w, css_h), (area / (css_w * css_h)) ** 0.5)
+
+
 def main():
     out = os.path.abspath(sys.argv[1]); os.makedirs(out, exist_ok=True)
+    sufixo = os.environ.get('SUFIXO', '')
     with sync_playwright() as p:
         b = p.chromium.launch(executable_path=os.environ.get("CHROMIUM"), args=['--allow-file-access-from-files'])
         pg = b.new_page(viewport={'width': 1000, 'height': 800}, device_scale_factor=2)
@@ -26,8 +36,20 @@ def main():
             pg.wait_for_function('window.__done==1', timeout=20000)
             pg.wait_for_timeout(400)
             el = pg.query_selector('#g svg')
+            bb = el.bounding_box()
+            esc = escala_para(bb['width'], bb['height'])
             name = os.path.splitext(os.path.basename(f))[0]
-            el.screenshot(path=os.path.join(out, name + '.png'))
-            print('ok', name)
+            if esc != 2:
+                ctx = b.new_context(viewport={'width': 1000, 'height': 800}, device_scale_factor=esc)
+                p2 = ctx.new_page()
+                p2.goto('file://' + html)
+                p2.evaluate('x=>go(x)', open(f, encoding='utf-8').read())
+                p2.wait_for_function('window.__done==1', timeout=20000)
+                p2.wait_for_timeout(400)
+                p2.query_selector('#g svg').screenshot(path=os.path.join(out, name + sufixo + '.png'))
+                ctx.close()
+            else:
+                el.screenshot(path=os.path.join(out, name + sufixo + '.png'))
+            print('ok', name, round(esc, 2))
         b.close()
 main()
