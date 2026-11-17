@@ -3,12 +3,19 @@ e Modelagem). Requer python-docx, Pillow, LibreOffice (soffice) e pdftotext.
 
     cd "Documentação/Documentos Meets/gerador" && python3 gerar.py
 """
+import glob
 import os
 import sys
 
 from meetsdoc import DOCS, MeetsDoc
-from dados import RF, RNF, RN, rfs_do_caso, rns_do_caso, RN_POR_ID
-from casos_de_uso import UC
+from dados import RF, RNF, RN, IMPL, rfs_do_caso, rns_do_caso, RN_POR_ID
+from casos_de_uso import UC, CENARIOS
+
+
+def telas(padrao):
+    """Prints do aplicativo em diagramas_LES/telas (ex.: 005.png, 009-c1.png para o 1º cenário do #009)."""
+    base = os.path.join(DOCS, 'diagramas_LES', 'telas')
+    return [os.path.relpath(f, os.path.join(DOCS, 'diagramas_LES')) for f in sorted(glob.glob(os.path.join(base, padrao)))]
 
 
 def saida(nome):
@@ -104,7 +111,7 @@ def visao():
     d.h1('Especificações Técnicas')
     d.p('Arquitetura cliente-servidor: um aplicativo multiplataforma consome uma API REST que acessa um banco relacional.')
     d.bullets([
-        '**Aplicativo:** React Native com Expo (Android, iOS e web), React Navigation e AsyncStorage para o token de sessão. A versão web é publicada na Vercel.',
+        '**Aplicativo:** React Native com Expo (Android, iOS e web), React Navigation e AsyncStorage para o token de sessão. A versão web é publicada no Render (meets-native.onrender.com).',
         '**API REST:** Node.js 20+ com Express 5, organizada em camadas — rotas (app.js e routes/), serviços (services/: moderação, pontuação e relógio) e repositórios SQL. Publicada no Render (Dockerfile com Node 22).',
         '**Banco de dados:** PostgreSQL, com migrações SQL versionadas (pasta migrations/) e script de desfazer para cada uma (migrations/rollback/).',
         '**Segurança:** JWT para sessão, bcrypt para senhas, Zod para validação, Helmet e CORS configurável; perfis "usuário" e "administrador".',
@@ -124,36 +131,50 @@ def visao():
         ['Conteúdo abusivo na comunidade', 'Média', 'Alto', 'Alto', 'Denúncias, fila de moderação, desativação de contas e registro de ações administrativas.'],
         ['Imagem acima do limite', 'Média', 'Médio', 'Médio', 'Corte e qualidade reduzida na escolha da imagem, validação de tamanho na API e limite de payload de 20 MB.'],
         ['Hospedagem gratuita suspensa (Render)', 'Média', 'Médio', 'Médio', 'O aplicativo chama /health ao abrir para acordar o servidor; a API também pode ser executada localmente.'],
+        ['Banco de dados gratuito expira ou fica indisponível', 'Média', 'Alto', 'Alto', 'Acompanhar o vencimento do plano, manter cópia dos dados (pg_dump) e trocar a variável DATABASE_URL; as migrações recriam toda a estrutura ao iniciar a API.'],
     ], [4.0, 1.4, 1.6, 1.4, 8.6])
 
     d.h1('Cronograma de Marcos Resumido')
-    d.tabela(['Marco do Projeto', 'Data / Período'], [
-        ['Início e definição do escopo', '03/08/2026'],
-        ['Levantamento e especificação de requisitos', '04/08/2026 a 08/08/2026'],
-        ['Modelagem UML e modelo de banco de dados', '09/08/2026 a 12/08/2026'],
-        ['Implementação da aplicação mobile e API REST', '13/08/2026 a 20/08/2026'],
-        ['Persistência PostgreSQL e testes automatizados', '17/08/2026 a 21/08/2026'],
+    d.p('Considerando o planejamento do projeto de acordo com as informações publicadas neste documento, os marcos do projeto são:')
+    d.tabela(['Marco', 'Data / Período'], [
+        ['Início do projeto e definição do escopo', '03/08/2026'],
+        ['Especificação de requisitos', '04/08/2026 a 08/08/2026'],
+        ['Modelagem da iteração inicial (UML e banco de dados)', '09/08/2026 a 12/08/2026'],
+        ['Início do desenvolvimento do aplicativo e da API REST', '13/08/2026 a 20/08/2026'],
+        ['Testes unitários e de integração automatizados (Vitest)', '17/08/2026 a 21/08/2026'],
         ['Documentação e diagramas', '22/08/2026 a 24/08/2026'],
-        ['Entrega parcial e apresentação', '07/09/2026 a 14/09/2026'],
+        ['Apresentação de protótipos e entrega parcial', '07/09/2026 a 14/09/2026'],
         ['Auditoria, decisões de escopo e alinhamento documentação × código', '10/2026'],
+        ['Instalação (publicação do aplicativo e da API no Render)', '[a definir]'],
+        ['Testes de aceitação do usuário', '[a definir]'],
+        ['Entrega do projeto final (apresentação e feira)', '[a definir]'],
     ], [11.0, 6.0])
 
     d.h1('Orçamento Resumido')
-    d.p('Estimativa acadêmica fictícia para fins de planejamento, conforme permitido pela disciplina:')
+    d.p('Estimativa acadêmica fictícia para fins de planejamento, conforme permitido pela disciplina. Os valores consideram os quatro meses do projeto (agosto a novembro de 2026).')
     d.tabela(['Categoria de Custo / Item', 'Estimativa (R$)'], [
-        ['Hardware e equipamentos (infraestrutura pré-existente)', 'R$ 0,00'],
-        ['Licenças de software (ferramentas open source)', 'R$ 0,00'],
-        ['Infraestrutura e serviços em nuvem', 'R$ 600,00'],
-        ['Esforço de desenvolvimento, testes e documentação (6 alunos ADS)', 'R$ 15.000,00'],
-        ['Margem de contingência para riscos (10%)', 'R$ 1.560,00'],
-        ['**Total Estimado do Projeto**', '**R$ 17.160,00**'],
+        'Custos fixos',
+        ['Hardware (computadores e celulares próprios da equipe)', 'R$ 0,00'],
+        ['Licenças de software (ferramentas open source e planos gratuitos)', 'R$ 0,00'],
+        ['Treinamentos (documentação oficial e materiais gratuitos)', 'R$ 0,00'],
+        'Custos variáveis',
+        ['Salário da equipe de desenvolvimento (6 alunos de ADS)', 'R$ 15.000,00'],
+        ['Pessoal de apoio (orientação docente, sem custo)', 'R$ 0,00'],
+        ['Encargos e benefícios (projeto acadêmico, sem vínculo empregatício)', 'R$ 0,00'],
+        ['Custo de instalações (laboratórios da Fatec)', 'R$ 0,00'],
+        ['Consumo de energia e materiais', 'R$ 300,00'],
+        ['Operação da rede e serviços em nuvem (hospedagem, banco e e-mail)', 'R$ 600,00'],
+        ['**Subtotal**', '**R$ 15.900,00**'],
+        ['Orçamento para riscos (margem de contingência de 10%)', 'R$ 1.590,00'],
+        ['Margem de lucro (10%)', 'R$ 1.749,00'],
+        ['**Total Estimado do Projeto**', '**R$ 19.239,00**'],
     ], [12.0, 5.0])
     return d
 
 
 # ---------------------------------------------------------------- Atividades
 ATIVIDADES = [
-    ('Atividade 1 - Organização e Realização de Evento', 'atividade-negocio-1-evento.png',
+    ('Atividade 1 - Organização e Realização de Evento', 'apresentacao/drawio-hd/negocio-1-evento-hd.png',
      'Ciclo de vida de um evento, da criação à avaliação dos apresentadores e atualização do ranking.', [
         '**Criação do evento:** o Organizador (Usuário) preenche título, descrição, imagem, data, horário de início e de fim, local (CEP, UF e número) e visibilidade, e pode publicar apresentações vinculadas ao evento com os apresentadores. O sistema valida e publica. *Quebra de fluxo:* campos obrigatórios em falta, data passada, fim antes do início ou UF diferente do perfil — o sistema destaca os campos e não publica.',
         '**Divulgação:** o evento aparece no feed e no calendário de quem pode vê-lo; os participantes curtem, comentam, compartilham e salvam.',
@@ -163,7 +184,7 @@ ATIVIDADES = [
         '**Avaliação:** o Participante avalia o evento (1 a 5 estrelas e comentário) e o apresentador (estrelas e seis atributos de 0 a 99), de forma pública ou anônima.',
         '**Ranking:** o sistema recalcula a pontuação geral do apresentador (média dos atributos) e o ranking.',
     ]),
-    ('Atividade 2 - Publicação de Conteúdo e Interação na Comunidade', 'atividade-negocio-2-conteudo.png',
+    ('Atividade 2 - Publicação de Conteúdo e Interação na Comunidade', 'apresentacao/drawio-hd/negocio-2-conteudo-hd.png',
      'Dinâmica diária de compartilhamento de informações entre os membros.', [
         '**Publicação:** o Usuário escreve o post, anexa imagem (com corte) e escolhe a visibilidade: público, seguidores, pessoas selecionadas ou somente com link. *Quebra de fluxo:* texto vazio ou acima do limite — o sistema bloqueia o envio.',
         '**Distribuição:** o sistema coloca o post no feed das pessoas autorizadas.',
@@ -171,7 +192,7 @@ ATIVIDADES = [
         '**Manutenção pelo autor:** o autor edita ou exclui o post; o sistema confere a autoria e registra no histórico.',
         '**Denúncia:** se o conteúdo for impróprio, qualquer usuário pode denunciá-lo, iniciando a Atividade 3.',
     ]),
-    ('Atividade 3 - Moderação e Controle de Qualidade', 'atividade-negocio-3-moderacao.png',
+    ('Atividade 3 - Moderação e Controle de Qualidade', 'apresentacao/drawio-hd/negocio-3-moderacao-hd.png',
      'Garante a segurança e a integridade do conteúdo da plataforma.', [
         '**Denúncia:** o Usuário escolhe "Denunciar" em um post, apresentação, evento ou perfil, seleciona o motivo e descreve. O sistema impede denunciar o próprio conteúdo ou repetir uma denúncia aberta, registra como "Pendente" e notifica os administradores.',
         '**Início da análise:** o Administrador abre a fila e inicia a análise; a denúncia passa a "Em análise".',
@@ -180,7 +201,7 @@ ATIVIDADES = [
         '**Auditoria:** o sistema registra administrador, ação, alvo, data e justificativa.',
         '**Reativação:** uma conta desativada só volta a funcionar se um administrador a reativar.',
     ]),
-    ('Atividade 4 - Análise do Desempenho da Comunidade', 'atividade-negocio-4-analise.png',
+    ('Atividade 4 - Análise do Desempenho da Comunidade', 'apresentacao/drawio-hd/negocio-4-analise-hd.png',
      'Acompanhamento de uso, engajamento e qualidade das apresentações.', [
         '**Dashboards:** o Usuário abre o dashboard e vê os indicadores do próprio conteúdo; o Administrador pode alternar para a visão da plataforma. São quatro painéis: posts, eventos, avaliações e apresentadores.',
         '**Período:** no dashboard o usuário escolhe tudo, 7, 30 ou 90 dias; o sistema recalcula os indicadores.',
@@ -198,14 +219,13 @@ def atividades():
     d.h1('Atividades do Negócio')
     d.p('Para substituir a informalidade na organização de eventos e no compartilhamento de conteúdos, foram identificadas quatro atividades principais:')
     for i, (titulo, img, intro, passos) in enumerate(ATIVIDADES, 1):
-        if i > 1:
-            d.page_break()
         d.h2(titulo)
         d.p(intro)
         d.numerada(passos)
-        d.page_break()
-        d.h3('Diagrama de Atividades')
-        d.imagem(img, legenda=f'Figura {i} – {titulo}', altura_max_cm=19.5)
+        d.inicio_paisagem()
+        d.h3('Diagrama de Atividades', indice=True)
+        d.imagem(img, largura_cm=23.5, legenda=f'Figura {i} – {titulo}', altura_max_cm=13.2)
+        d.fim_paisagem(ultima=(i == len(ATIVIDADES)))
     return d
 
 
@@ -224,20 +244,38 @@ def requisitos():
         'Validação cruzada entre funcionalidades implementadas e documentação exigida pela disciplina.',
     ])
     d.h1('Requisitos Funcionais')
+    d.p('Os requisitos funcionais documentados abaixo foram organizados em grupos de acordo com os módulos do aplicativo. Cada quadro traz a prioridade, as regras de negócio que se aplicam ao requisito (descritas na seção 6) e como ele está implementado.')
     grupo = None
-    linhas = []
     for (rid, g, nome, prio, esp, rns, uc) in RF:
         if g != grupo:
-            linhas.append(g)  # linha de grupo
+            d.h2(f'Grupo: {g}')
             grupo = g
-        linhas.append([rid, nome, prio, esp, uc])
-    d.tabela(['ID', 'Requisito', 'Prior.', 'Especificação', 'Caso de uso'], linhas, [1.4, 3.2, 1.3, 9.3, 1.8])
-    d.h1('Requisitos Não Funcionais')
-    d.tabela(['ID', 'Grupo', 'Prior.', 'Descrição'], [list(r) for r in RNF], [1.6, 2.8, 1.3, 11.3])
-    d.h1('Regras de Negócio')
+        regras = ', '.join(rns)
+        d.caixa_requisito(f'{rid} – {nome}', prio,
+                          f'{esp} Regras de negócio aplicadas: {regras}.',
+                          f'{IMPL[rid]} Caso de uso: {uc}.')
+    d.h1('Requisitos Não Funcionais', quebra=True)
+    d.p('Os requisitos não funcionais documentados abaixo foram organizados em grupos de acordo com a categoria: Segurança, Confiabilidade, Desempenho, Usabilidade, Portabilidade e Suportabilidade.')
+    grupos_rnf = [
+        ('Segurança', ['RNF01', 'RNF02', 'RNF04', 'RNF11']),
+        ('Confiabilidade', ['RNF03', 'RNF10', 'RNF12']),
+        ('Desempenho', ['RNF05']),
+        ('Usabilidade', ['RNF06']),
+        ('Portabilidade', ['RNF07']),
+        ('Suportabilidade', ['RNF08', 'RNF09']),
+    ]
+    rnf = {r[0]: r for r in RNF}
+    assert sorted(i for _, ids in grupos_rnf for i in ids) == sorted(rnf), 'RNF fora dos grupos'
+    for g, ids in grupos_rnf:
+        d.h2(f'Grupo: {g}')
+        for i in ids:
+            _, nome, prio, desc = rnf[i]
+            d.caixa_requisito(f'{i} – {nome}', prio, desc, rotulo_esp='Descrição:')
+    d.h1('Regras de Negócio', quebra=True)
+    d.p('Regras que restringem os requisitos funcionais. Cada uma foi conferida com a validação correspondente na API.')
     d.tabela(['ID', 'Regra'], [list(r) for r in RN], [1.6, 15.4])
     d.page_break()
-    d.h1('Matriz RF x RN')
+    d.h1('Matriz de relacionamento Requisitos Funcionais x Regras de Negócio')
     d.p('Relação entre cada requisito funcional e as regras de negócio que o restringem ("X" indica relação).')
     rn_ids = [r[0] for r in RN]
     metade = (len(rn_ids) + 1) // 2
@@ -269,7 +307,7 @@ def casos_de_uso():
     d.h1('Objetivo')
     d.p('Especificar os casos de uso do Meets: atores, permissões, fluxos e regras, em correspondência com a implementação.')
     d.p('O Meets é uma plataforma para divulgação e participação em eventos, publicação de conteúdos e interação entre usuários e apresentadores. Os usuários publicam posts, apresentações e eventos, interagem com curtidas, comentários, compartilhamentos e presença, avaliam eventos (1 a 5 estrelas) e apresentadores (estrelas e seis atributos de 0 a 99), consultam ranking e dashboards. Administradores gerenciam contas e tratam denúncias.')
-    d.p('Os casos de uso são classificados em três tipos: **Básico** (cadastro, consulta e manutenção de dados e interações simples), **Análise** (o sistema processa dados para gerar informação ou apoiar decisão) e **Condução** (automação conduzida pelo próprio sistema, disparada por tempo ou evento).')
+    d.p('Os casos de uso são classificados nos três tipos do modelo da disciplina: **Configuração** (cadastro, consulta e manutenção de dados e interações simples que sustentam o sistema), **Análise** (o sistema processa dados para gerar informação ou apoiar decisão) e **Condução** (automação conduzida pelo próprio sistema, disparada por tempo ou evento). Os casos "Manter" são divididos em cenários (cadastrar, editar, excluir e buscar), cada um com o seu fluxo.')
     d.p('Todas as funcionalidades, exceto cadastro e login, exigem usuário autenticado.')
 
     d.h1('Atores do Sistema')
@@ -285,7 +323,7 @@ def casos_de_uso():
     d.p('**Descrição:** ator não humano — rotina da API executada a cada minuto. **Responsabilidade:** conduzir o lembrete de avaliação pendente (#015).')
 
     d.h1('Diagrama de Casos de Uso')
-    d.p('No diagrama, as cores indicam o tipo: cinza = Básico, azul = Análise e verde = Condução (automação). O Administrador é especialização do Usuário (seta de generalização).')
+    d.p('No diagrama, as cores indicam o tipo: cinza = Configuração, azul = Análise e verde = Condução (automação). O Administrador é especialização do Usuário (seta de generalização).')
     d.imagem('casos-de-uso-geral.png', largura_cm=16, legenda='Figura 1 – Diagrama geral de casos de uso', altura_max_cm=21)
     d.h2('Lista de Casos de Uso')
     d.tabela(['Caso de uso', 'Tipo', 'Ator', 'Requisitos'],
@@ -304,16 +342,36 @@ def casos_de_uso():
         rfs = rfs_do_caso(u['id'])
         if rfs:
             d.p(f"**Requisitos:** {', '.join(rfs)}  ·  **Regras de negócio:** {', '.join(rns_do_caso(u['id']))}", space_after=2)
-        for rot, chave in (('Pré-condições:', 'pre'), ('Pós-condições:', 'pos'), ('Entradas:', 'entradas'), ('Saídas:', 'saidas')):
-            d.rotulo(rot)
-            d.bullets(u[chave])
-        d.rotulo('Fluxo principal:')
-        d.numerada(u['fluxo'])
-        for i, (tit, passos) in enumerate(u['alternativos'], 1):
-            d.rotulo(f'Fluxo alternativo {i}: {tit}')
-            d.numerada(passos)
-        d.rotulo('Protótipo de interface:')
-        d.bullets(u['prototipo'])
+        if u['id'] in CENARIOS:
+            for k, (nome, pre, pos, ent, sai, fluxo, alts, proto) in enumerate(CENARIOS[u['id']], 1):
+                d.h3(f'Cenário: {nome}', indice=True)
+                for rot, itens in (('Pré Condições:', pre), ('Pós Condições:', pos), ('Entradas:', ent), ('Saídas:', sai)):
+                    d.rotulo(rot)
+                    d.bullets(itens) if itens else None
+                d.rotulo('Fluxo:')
+                d.numerada(fluxo)
+                for i, (tit, passos) in enumerate(alts, 1):
+                    d.rotulo(f'Fluxo Alternativo {i}: {tit}')
+                    d.numerada(passos)
+                d.rotulo('Protótipo de Interface:')
+                d.bullets(proto)
+                for img in telas(f"{u['id'][1:]}-c{k}*.png"):
+                    d.imagem(img, largura_cm=8, legenda=f'Figura {figura} – Tela: {nome}', altura_max_cm=12)
+                    figura += 1
+        else:
+            for rot, chave in (('Pré Condições:', 'pre'), ('Pós Condições:', 'pos'), ('Entradas:', 'entradas'), ('Saídas:', 'saidas')):
+                d.rotulo(rot)
+                d.bullets(u[chave]) if u[chave] else None
+            d.rotulo('Fluxo:')
+            d.numerada(u['fluxo'])
+            for i, (tit, passos) in enumerate(u['alternativos'], 1):
+                d.rotulo(f'Fluxo Alternativo {i}: {tit}')
+                d.numerada(passos)
+            d.rotulo('Protótipo de Interface:')
+            d.bullets(u['prototipo'])
+            for img in [t for t in telas(f"{u['id'][1:]}*.png") if '-c' not in os.path.basename(t)]:
+                d.imagem(img, largura_cm=8, legenda=f"Figura {figura} – Tela: {u['nome']}", altura_max_cm=12)
+                figura += 1
         for img, leg in u.get('diagramas', []):
             d.imagem(img, largura_cm=16, legenda=f'Figura {figura} – {leg}', altura_max_cm=20)
             figura += 1
@@ -325,7 +383,7 @@ def modelagem():
     d = MeetsDoc('Modelagem do Sistema', saida('Modelagem do Sistema Meets.docx'))
     d.indice()
     d.h1('Objetivo')
-    d.p('Reunir os modelos estruturais e comportamentais do Meets — MER, DER, diagramas de classe e de estado — gerados a partir do banco de dados migrado e do código. As fontes editáveis (Mermaid e Graphviz) ficam em "diagramas_LES/fontes".')
+    d.p('Reunir os modelos estruturais e comportamentais do Meets — MER, DER e diagramas de classe — gerados a partir do banco de dados migrado e do código. As fontes editáveis (Mermaid e Graphviz) ficam em "diagramas_LES/fontes".')
     d.h1('Modelo Entidade-Relacionamento (MER)', quebra=True)
     d.p('Modelo conceitual em notação de Chen. A Apresentação é uma especialização de Post; as avaliações são relacionamentos N:N entre Usuário e Evento e entre Usuário e Apresentação, com atributos próprios. O Perfil e a Configuração são 1:1 com o Usuário.')
     d.imagem('mer-conceitual.png', largura_cm=17, legenda='Figura 1 – MER conceitual', altura_max_cm=18.5)
@@ -348,19 +406,7 @@ def modelagem():
     ]:
         d.imagem(img, largura_cm=17, legenda=f'Figura {fig} – {leg}', altura_max_cm=18.5)
         fig += 1
-    d.h1('Diagramas de Estado', quebra=True)
-    for img, leg in [
-        ('estado-usuario.png', 'Estado – Conta do usuário'),
-        ('estado-autenticacao.png', 'Estado – Autenticação'),
-        ('estado-perfil.png', 'Estado – Perfil'),
-        ('estado-post.png', 'Estado – Post'),
-        ('estado-evento.png', 'Estado – Evento'),
-        ('estado-avaliacao.png', 'Estado – Processo de avaliação'),
-        ('estado-denuncia.png', 'Estado – Denúncia'),
-    ]:
-        d.imagem(img, largura_cm=15, legenda=f'Figura {fig} – {leg}', altura_max_cm=11)
-        fig += 1
-    d.h1('Diagramas de Sequência')
+    d.h1('Diagramas de Sequência', quebra=True)
     d.p('Os diagramas de sequência acompanham as especificações dos casos de uso #005, #006, #013 e #015 no documento "Casos de Uso Meets".')
     return d
 

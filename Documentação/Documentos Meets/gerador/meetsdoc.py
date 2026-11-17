@@ -130,10 +130,67 @@ class MeetsDoc:
         self.headings.append((2, texto))
         return p
 
-    def h3(self, texto):
+    def h3(self, texto, indice=False):
         p = self._new_paragraph('Heading 3')
         p.add_run(texto)
+        if indice:
+            self.headings.append((3, texto))
         return p
+
+    def caixa_requisito(self, titulo, prioridade, especificacao, detalhes=None, rotulo_esp='Especificação da Regra de Negócio:'):
+        """Quadro do modelo da professora: título numerado (Heading 3) + prioridade, e linhas de texto."""
+        linhas = 2 + (1 if detalhes else 0)
+        tbl = self.doc.add_table(rows=linhas, cols=2)
+        el = tbl._tbl
+        el.getparent().remove(el)
+        self._append(el)
+        tbl.style = self.doc.styles['Table Grid']
+        tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
+        tbl.autofit = False
+        larg = (13.4, 3.6)
+        for row in tbl.rows:
+            for i, w in enumerate(larg):
+                row.cells[i].width = Cm(w)
+        for i, gc in enumerate(el.tblGrid.findall(qn('w:gridCol'))):
+            gc.set(qn('w:w'), str(int(larg[i] * 567)))
+        # título: parágrafo Heading 3 dentro da célula (numeração 4.1.1 do modelo)
+        c0 = tbl.rows[0].cells[0]
+        h = c0.paragraphs[0]
+        h.style = self.doc.styles['Heading 3']
+        h.add_run(titulo)
+        h.paragraph_format.space_before = Pt(4)
+        h.paragraph_format.space_after = Pt(4)
+        self.headings.append((3, titulo))
+        c1 = tbl.rows[0].cells[1]
+        pr = c1.paragraphs[0]
+        r = pr.add_run('Prioridade'); r.bold = True; r.font.size = Pt(9)
+        pr.paragraph_format.space_after = Pt(0)
+        cores = {'Alta': RGBColor(0xFF, 0x00, 0x00), 'Média': RGBColor(0x00, 0x99, 0x33), 'Baixa': RGBColor(0x00, 0x8C, 0xC8)}
+        pv = c1.add_paragraph()
+        rv = pv.add_run(prioridade); rv.bold = True; rv.font.size = Pt(9); rv.font.color.rgb = cores[prioridade]
+        pv.paragraph_format.space_after = Pt(0)
+        for idx, (rot, texto) in enumerate([(rotulo_esp, especificacao)] + ([('Detalhes da implementação prevista:', detalhes)] if detalhes else []), 1):
+            m = tbl.rows[idx].cells[0].merge(tbl.rows[idx].cells[1])
+            par = m.paragraphs[0]
+            rr = par.add_run(rot + ' '); rr.bold = True; rr.font.size = Pt(9)
+            _markup_runs(par, texto, size=9)
+            par.paragraph_format.space_after = Pt(2)
+            par.paragraph_format.line_spacing = 1.1
+            par.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+        # não quebrar o quadro entre páginas
+        for row in tbl.rows:
+            trPr = row._tr.get_or_add_trPr()
+            cs = OxmlElement('w:cantSplit'); cs.set(qn('w:val'), 'true'); trPr.append(cs)
+            for c in row.cells:
+                for pp in c.paragraphs:
+                    pp.paragraph_format.keep_with_next = True
+        tblPr = el.tblPr
+        mar = OxmlElement('w:tblCellMar')
+        for lado, v in (('top', '60'), ('bottom', '60'), ('left', '100'), ('right', '100')):
+            e = OxmlElement(f'w:{lado}'); e.set(qn('w:w'), v); e.set(qn('w:type'), 'dxa'); mar.append(e)
+        tblPr.append(mar)
+        self._new_paragraph().paragraph_format.space_after = Pt(6)
+        return tbl
 
     def p(self, texto, italic=False, align=None, size=None, space_after=6):
         par = self._new_paragraph()
@@ -287,30 +344,62 @@ class MeetsDoc:
             r = leg.add_run(legenda); r.italic = True; r.font.size = Pt(9)
             leg.paragraph_format.space_after = Pt(10)
 
+    def _quebra_secao(self, paisagem):
+        """Encerra a seção atual (retrato ou paisagem) com cabeçalho e rodapé iguais aos do documento."""
+        sect = copy.deepcopy(self._sectPr)
+        for tp in sect.findall(qn('w:titlePg')):
+            sect.remove(tp)
+        pgSz = sect.find(qn('w:pgSz'))
+        if paisagem:
+            w, h = pgSz.get(qn('w:w')), pgSz.get(qn('w:h'))
+            pgSz.set(qn('w:w'), h); pgSz.set(qn('w:h'), w); pgSz.set(qn('w:orient'), 'landscape')
+        par = self._new_paragraph()
+        par._p.get_or_add_pPr().append(sect)
+        return par
+
+    def inicio_paisagem(self):
+        self._quebra_secao(paisagem=False)
+
+    def fim_paisagem(self, ultima=False):
+        if not ultima:
+            self._quebra_secao(paisagem=True)
+            return
+        # última seção do documento: a própria sectPr final vira paisagem (evita página em branco)
+        pgSz = self._sectPr.find(qn('w:pgSz'))
+        w, h = pgSz.get(qn('w:w')), pgSz.get(qn('w:h'))
+        pgSz.set(qn('w:w'), h); pgSz.set(qn('w:h'), w); pgSz.set(qn('w:orient'), 'landscape')
+        for tp in self._sectPr.findall(qn('w:titlePg')):
+            self._sectPr.remove(tp)
+
     def page_break(self):
         par = self._new_paragraph()
         par.add_run().add_break(WD_BREAK.PAGE)
 
     # ---------- índice e saída ----------
+    def _rotulos(self):
+        contadores = [0, 0, 0]
+        for (nivel, texto) in self.headings:
+            contadores[nivel - 1] += 1
+            for k in range(nivel, 3):
+                contadores[k] = 0
+            if nivel == 1:
+                rot = f'{contadores[0]}.'
+            else:
+                rot = '.'.join(str(c) for c in contadores[:nivel])
+            yield nivel, texto, rot
+
     def _escrever_indice(self, paginas):
         anchor = self._toc_anchor._p
-        contadores = [0, 0]
-        for (nivel, texto) in self.headings:
-            if nivel == 1:
-                contadores[0] += 1; contadores[1] = 0
-                num = f'{contadores[0]}.'
-            else:
-                contadores[1] += 1
-                num = f'{contadores[0]}.{contadores[1]}'
-            pg = paginas.get((nivel, texto), '')
+        for idx, (nivel, texto, num) in enumerate(self._rotulos()):
+            pg = paginas.get(idx, '')
             par = self.doc.add_paragraph(style='toc 1' if nivel == 1 else 'toc 2')
             par.add_run(f'{num}\t{texto if pg else "§" + texto}\t{pg}')
             from docx.enum.text import WD_TAB_ALIGNMENT, WD_TAB_LEADER
             ts = par.paragraph_format.tab_stops
-            ts.add_tab_stop(Cm(1.0 if nivel == 1 else 1.6))
+            ts.add_tab_stop(Cm({1: 1.0, 2: 1.6, 3: 2.4}[nivel]))
             ts.add_tab_stop(Cm(17.0), WD_TAB_ALIGNMENT.RIGHT, WD_TAB_LEADER.DOTS)
-            if nivel == 2:
-                par.paragraph_format.left_indent = Cm(0.6)
+            if nivel >= 2:
+                par.paragraph_format.left_indent = Cm(0.6 if nivel == 2 else 1.2)
             el = par._p; el.getparent().remove(el)
             anchor.addprevious(el)
 
@@ -322,27 +411,20 @@ class MeetsDoc:
             txt = subprocess.run(['pdftotext', '-layout', pdf, '-'], check=True, capture_output=True).stdout.decode('utf-8')
         paginas_txt = txt.split('\f')
         resultado = {}
-        contadores = [0, 0]
         inicio = 1  # pula a capa
         for i, pg in enumerate(paginas_txt):
             if re.search(r'1\.\s+Índice', pg):
                 inicio = i  # as linhas do índice levam '§' e não casam com os títulos
                 break
-        for (nivel, texto) in self.headings:
-            if nivel == 1:
-                contadores[0] += 1; contadores[1] = 0
-                rot = f'{contadores[0]}.'
-            else:
-                contadores[1] += 1
-                rot = f'{contadores[0]}.{contadores[1]}'
+        for idx, (nivel, texto, rot) in enumerate(self._rotulos()):
             alvo = re.sub(r'\s+', ' ', f'{rot} {texto}').strip()
             if texto == 'Índice':
-                resultado[(nivel, texto)] = inicio + 1
+                resultado[idx] = inicio + 1
                 continue
             for i in range(inicio, len(paginas_txt)):
                 pagina = re.sub(r'\s+', ' ', paginas_txt[i])
                 if alvo in pagina:
-                    resultado[(nivel, texto)] = i + 1
+                    resultado[idx] = i + 1
                     inicio = i
                     break
         return resultado
@@ -367,5 +449,5 @@ class MeetsDoc:
                 break
         self._escrever_indice(paginas)
         self.doc.save(self.saida)
-        faltando = [t for (n, t) in self.headings if (n, t) not in paginas]
+        faltando = [t for i, (n, t) in enumerate(self.headings) if i not in paginas]
         return faltando

@@ -162,7 +162,7 @@ RN = [
     ('RN19', 'Uma rotina automática, a cada minuto, cria um único lembrete por evento ou apresentação encerrado para cada participante que ainda não o recebeu.'),
     ('RN20', 'Com as notificações desligadas, avisos comuns não são gerados; avisos de moderação (remoção, advertência, desativação) sempre são.'),
     ('RN21', 'Podem ser denunciados posts, apresentações, eventos e usuários, por um motivo da lista (spam, ofensivo, assédio, falso, impróprio, outro). Ninguém denuncia o próprio conteúdo, e cada pessoa tem no máximo uma denúncia aberta por alvo.'),
-    ('RN22', 'Ciclo da denúncia: Pendente → Em análise → Procedente ou Improcedente; após decidida não muda. Procedente exige uma ação; "remover conteúdo" não vale para denúncia de usuário nem para conteúdo já removido. A decisão encerra junto as demais denúncias abertas sobre o mesmo alvo.'),
+    ('RN22', 'Ciclo da denúncia: Pendente → Em análise → Procedente ou Improcedente; após decidida não muda. Procedente exige uma ação; "remover conteúdo" não vale para denúncia de usuário nem para conteúdo já removido. Quando a ação é remover o conteúdo ou desativar a conta, as demais denúncias abertas sobre o mesmo alvo são encerradas junto.'),
     ('RN23', 'Toda ação administrativa (criar, editar, promover, desativar, reativar, remover, advertir, decidir denúncia) é registrada com administrador, alvo, data e observação.'),
     ('RN24', 'No dashboard, o usuário vê somente dados do próprio conteúdo; a visão da plataforma é exclusiva de administradores. O período do dashboard pode ser tudo, 7, 30 ou 90 dias (no ranking: desde o início, 90 ou 30 dias).'),
     ('RN25', 'Os horários do Meets seguem o fuso America/Sao_Paulo (configurável por APP_TIMEZONE).'),
@@ -186,3 +186,45 @@ def rns_do_caso(uc):
                 if rn not in ids:
                     ids.append(rn)
     return sorted(ids)
+
+
+# Detalhes da implementação de cada RF (modelo da professora: "Detalhes da implementação prevista").
+# Conferidos com Código/backend/src (rotas e repositórios), migrations/ e Código/snack/screens.
+IMPL = {
+    'RF01': 'Tela SignupScreen (nome, e-mail, senha e confirmação). API POST /auth/signup valida com Zod, grava a senha com bcrypt na tabela users e cria o registro em profiles e settings; em seguida POST /auth/send-verification gera o código.',
+    'RF02': 'Tela EmailVerificationScreen (campo do código e botão de reenviar). API POST /auth/verify-email confere o hash do código e a validade (colunas email_verification_token_hash e email_verification_expires_at em users) e marca email_verified.',
+    'RF03': 'Tela LoginScreen (e-mail e senha). API POST /auth/login compara a senha com bcrypt e devolve o token JWT, guardado pelo aplicativo no AsyncStorage.',
+    'RF04': 'Opção "Sair" no menu do aplicativo; apaga o token do AsyncStorage e volta para a tela de login. Não há chamada à API.',
+    'RF05': 'Tela SettingsScreen (senha atual, nova senha e confirmação). API PUT /users/me/password confere a senha atual e grava o novo hash.',
+    'RF06': 'Tela de perfil, opção "Desativar conta" com confirmação da senha. API POST /users/me/deactivate muda o status em users para desativado; nada é apagado.',
+    'RF07': 'Telas ProfileScreen e EditProfileScreen (nome, cargo, cidade/UF, número, foto e biografia; a foto passa pelo ImageEditorScreen). API GET e PUT /users/me sobre users e profiles.',
+    'RF08': 'Telas SpeakerProfileScreen e ShareProfileScreen. API GET /users/:id/public devolve perfil, publicações visíveis e médias como apresentador; o link aberto por quem não está logado usa GET /public/content/:type/:id.',
+    'RF09': 'Botão "Seguir" no perfil público. API POST /users/:id/connect (alternância), GET /users/:id/connection-status, GET /users/connections e GET /users/followers sobre a tabela user_connections.',
+    'RF10': 'Tela ChatScreen. API GET e POST /chats, GET e POST /chats/:id/messages e POST /chats/:id/read sobre chats, chat_members e chat_messages.',
+    'RF11': 'Tela HomeScreen. API GET /feed reúne posts, apresentações e eventos visíveis ao usuário (tabelas posts, events e content_audience), em ordem de criação, com os contadores de curtidas, comentários e compartilhamentos.',
+    'RF12': 'Tela CreateScreen, aba post (título, texto, imagem e visibilidade). API POST /posts grava em posts e, para "selecionados", em content_audience; registra a ação em history.',
+    'RF13': 'Menu ⋮ do post (Editar / Excluir com confirmação). API PUT /posts/:id e DELETE /posts/:id, permitidos somente ao autor; a exclusão remove curtidas e comentários em cascata.',
+    'RF14': 'Tela CreateScreen, aba apresentação (data, início, fim, local, evento vinculado e apresentadores). API POST /content grava em posts (tipo apresentação) e em presentation_speakers.',
+    'RF15': 'Seletor de visibilidade nas telas de criação e edição (público, seguidores, selecionados, link). Coluna visibility em posts e events; pessoas escolhidas em content_audience; link com share_token.',
+    'RF16': 'Ícone de coração no feed e no detalhe. API POST /posts/:id/like e POST /events/:id/like (alternância) sobre post_likes e event_likes.',
+    'RF17': 'Telas PostDetailScreen e EventDetailScreen. API GET e POST /posts/:id/comments, GET e POST /events/:id/comments e DELETE /comments/:id sobre post_comments.',
+    'RF18': 'Botão "Compartilhar" (folha de compartilhamento do aparelho). API POST /shares grava em content_shares; o link abre SharedContentScreen.',
+    'RF19': 'Ícones salvar e favoritar; telas SavesScreen e FavoritesScreen. API POST /posts/:id/save, POST /events/:id/save, POST /posts/:id/favorite, GET /saves e GET /favorites sobre saved_posts, saved_events e favorites.',
+    'RF20': 'Tela CreateScreen, aba evento (título, descrição, imagem, data, início, fim, CEP, UF, número e visibilidade). API POST /content grava em events e inclui o organizador em event_participants como anfitrião.',
+    'RF21': 'Tela EventDetailScreen, menu do organizador (Editar / Excluir com confirmação). API PUT /events/:id e DELETE /events/:id, permitidos somente ao organizador.',
+    'RF22': 'Botão "Confirmar presença" em EventDetailScreen. API POST /events/:id/participate (alternância) e GET /events/:id/participants sobre event_participants; gera notificação para o organizador.',
+    'RF23': 'Tela CalendarScreen (calendário mensal com marcação dos dias). API GET /calendar devolve os eventos organizados ou confirmados pelo usuário.',
+    'RF24': 'Tela EventRatingScreen (estrelas, comentário, público ou anônimo). API POST /ratings/events grava em event_ratings (uma por pessoa e evento) e GET /ratings/events/:eventId devolve a média.',
+    'RF25': 'Tela PresentationRatingScreen (apresentador, estrelas, seis atributos de 0 a 99, comentário e anonimato). API GET /ratings/available e POST /ratings/presentations gravam em presentation_ratings (atributos em skills, jsonb).',
+    'RF26': 'Rotina notifyFinished em server.js, executada na inicialização e a cada 60 segundos (setInterval), com um INSERT ... SELECT na tabela notifications; ensureRatingNotifications em repository.js repete a verificação quando o usuário abre as notificações.',
+    'RF27': 'Tela RankingScreen (pódio e filtro de período). API GET /ranking?days= calcula a pontuação em services/scoring.js a partir de presentation_ratings; o toque abre SpeakerProfileScreen (GET /ratings/speakers/:speakerId).',
+    'RF28': 'Tela DashboardScreen (escopo "Meu conteúdo" ou "Plataforma" e período). API GET /dashboard?scope=&days= em analyticsRepository.js; scope=platform só para administrador.',
+    'RF29': 'Gaveta NotificationsDrawer. API GET /notifications (50 mais recentes) e POST /notifications/:id/read sobre notifications; o toque abre a tela do alvo (target_type e target_id).',
+    'RF30': 'Tela SearchScreen (campo de busca com abas pessoas e posts). API GET /search?q= respeitando visibilidade e contas ativas.',
+    'RF31': 'Tela HistoryScreen. API GET /history lista os registros da tabela history do usuário.',
+    'RF32': 'Tela SettingsScreen (chaves de notificações e modo escuro). API GET e PUT /settings sobre a tabela settings.',
+    'RF33': 'Telas AdminUsersScreen e AdminUserFormScreen. API GET e POST /admin/users, GET e PUT /admin/users/:id, POST /admin/users/:id/deactivate e /reactivate e GET /admin/actions (adminRoutes.js); cada ação gera registro em admin_actions.',
+    'RF34': 'Opção "Denunciar" no menu do conteúdo ou do perfil (motivo e descrição). API POST /reports grava em reports com status pendente e notifica os administradores.',
+    'RF35': 'Telas AdminReportsScreen e AdminReportDetailScreen. API GET /admin/reports, GET /admin/reports/:id, POST /admin/reports/:id/start e POST /admin/reports/:id/decide (reportRoutes.js), com as ações em services/moderation.js.',
+    'RF36': 'Menu do administrador no post ou evento ("Remover", com motivo). API DELETE /posts/:id ou /events/:id, que para o administrador chama moderation.removeContent, registra em admin_actions e notifica o autor.',
+}

@@ -1,14 +1,14 @@
 """Especificação dos casos de uso do Meets (conferida com o código).
 
 Tipos (definição da disciplina):
-- Básico: cadastro, consulta e manutenção de dados (CRUD) e interações simples.
+- Configuração: cadastro, consulta e manutenção de dados (CRUD) e interações simples que sustentam o sistema.
 - Análise: o sistema processa dados para apoiar uma decisão ou gerar informação (avaliações, ranking, dashboards, denúncias).
 - Condução: automação; o sistema conduz o processo sozinho, disparado por tempo ou evento.
 """
 
 UC = [
     dict(
-        id='#001', nome='Fazer Login', tipo='Básico', atores='Visitante (Usuário ou Administrador já cadastrado)',
+        id='#001', nome='Fazer Login', tipo='Configuração', atores='Visitante (Usuário ou Administrador já cadastrado)',
         descricao='Permite que uma pessoa cadastrada entre no Meets com e-mail e senha e, ao final do uso, saia do aplicativo.',
         pre=['Possuir conta cadastrada;', 'Não estar autenticado no dispositivo.'],
         pos=['Token de sessão (JWT) salvo no dispositivo;', 'Funções do perfil (usuário ou administrador) liberadas.'],
@@ -30,7 +30,7 @@ UC = [
         prototipo=['Logotipo do Meets;', 'Campo "E-mail";', 'Campo "Senha" com opção de exibir;', 'Botão "Entrar";', 'Link "Criar conta".'],
     ),
     dict(
-        id='#002', nome='Visualizar Feed', tipo='Básico', atores='Usuário',
+        id='#002', nome='Visualizar Feed', tipo='Configuração', atores='Usuário',
         descricao='Apresenta, em ordem cronológica decrescente, os posts, apresentações e eventos que o usuário tem permissão de ver.',
         pre=['Usuário autenticado.'],
         pos=['Feed exibido com os conteúdos permitidos.'],
@@ -48,7 +48,7 @@ UC = [
         prototipo=['Barra superior com notificações e menu;', 'Cartões de post, apresentação e evento;', 'Botões curtir, comentar, compartilhar e menu ⋮ (denunciar).'],
     ),
     dict(
-        id='#003', nome='Interagir com Posts', tipo='Básico', atores='Usuário',
+        id='#003', nome='Interagir com Posts', tipo='Configuração', atores='Usuário',
         descricao='Permite curtir, comentar, compartilhar, salvar e favoritar posts e apresentações.',
         pre=['Usuário autenticado;', 'Post visível para o usuário.'],
         pos=['Interação registrada e contadores atualizados.'],
@@ -69,7 +69,7 @@ UC = [
         prototipo=['Ícones de curtir, comentar, compartilhar, salvar e favoritar com contadores;', 'Lista de comentários com campo de texto e botão enviar.'],
     ),
     dict(
-        id='#004', nome='Interagir com Eventos', tipo='Básico', atores='Usuário',
+        id='#004', nome='Interagir com Eventos', tipo='Configuração', atores='Usuário',
         descricao='Permite curtir, comentar, compartilhar e salvar eventos e confirmar ou cancelar presença.',
         pre=['Usuário autenticado;', 'Evento visível para o usuário.'],
         pos=['Interação registrada;', 'Na confirmação de presença, o organizador é notificado.'],
@@ -178,7 +178,7 @@ UC = [
         prototipo=['Seletor de escopo (administrador) e de período;', 'Cartões de indicadores;', 'Barras de distribuição de estrelas e de evolução mensal;', 'Barras por atributo.'],
     ),
     dict(
-        id='#009', nome='Manter Posts', tipo='Básico', atores='Usuário',
+        id='#009', nome='Manter Posts', tipo='Configuração', atores='Usuário',
         descricao='Permite criar, consultar, editar e excluir os próprios posts, definindo a visibilidade.',
         pre=['Usuário autenticado.'],
         pos=['Post criado, alterado ou excluído;', 'Atividade registrada no histórico.'],
@@ -198,7 +198,7 @@ UC = [
         prototipo=['Tela "Criar" com abas post, apresentação e evento;', 'Campos de título e texto, botão de imagem e seletor de visibilidade;', 'Botão "Publicar".'],
     ),
     dict(
-        id='#010', nome='Manter Perfil', tipo='Básico', atores='Usuário',
+        id='#010', nome='Manter Perfil', tipo='Configuração', atores='Usuário',
         descricao='Permite consultar e editar o próprio perfil, ver e compartilhar perfis de outras pessoas e desativar a própria conta.',
         pre=['Usuário autenticado.'],
         pos=['Perfil atualizado; ou conta desativada.'],
@@ -218,7 +218,7 @@ UC = [
         prototipo=['Foto, nome, cargo, cidade e biografia;', 'Botões "Editar perfil" e "Compartilhar";', 'Abas de publicações e eventos.'],
     ),
     dict(
-        id='#011', nome='Manter Eventos', tipo='Básico', atores='Usuário (organizador)',
+        id='#011', nome='Manter Eventos', tipo='Configuração', atores='Usuário (organizador)',
         descricao='Permite criar, consultar, editar e excluir eventos, criar apresentações vinculadas a eventos e consultar o calendário.',
         pre=['Usuário autenticado.'],
         pos=['Evento ou apresentação criado, alterado ou excluído;', 'Organizador registrado como anfitrião do evento.'],
@@ -240,7 +240,7 @@ UC = [
         prototipo=['Formulário com título, descrição, imagem, data, início, fim, CEP, UF, número e visibilidade;', 'Botão "Publicar";', 'Calendário mensal com os eventos do dia.'],
     ),
     dict(
-        id='#012', nome='Manter Usuários', tipo='Básico', atores='Administrador',
+        id='#012', nome='Manter Usuários', tipo='Configuração', atores='Administrador',
         descricao='Permite ao administrador listar, criar, editar, promover, desativar e reativar contas, com registro de todas as ações.',
         pre=['Administrador autenticado.'],
         pos=['Conta criada, alterada, desativada ou reativada;', 'Ação registrada no log administrativo;', 'Usuário afetado notificado, quando aplicável.'],
@@ -285,7 +285,7 @@ UC = [
         diagramas=[('sequencia-analisar-denuncia.png', 'Diagrama de sequência — Analisar Denúncias')],
     ),
     dict(
-        id='#014', nome='Cadastrar Usuário', tipo='Básico', atores='Visitante',
+        id='#014', nome='Cadastrar Usuário', tipo='Configuração', atores='Visitante',
         descricao='Permite que um visitante crie a sua conta e confirme o e-mail.',
         pre=['Não possuir conta com o mesmo e-mail.'],
         pos=['Conta, perfil e configurações criados;', 'Código de verificação enviado;', 'E-mail verificado ao final.'],
@@ -330,7 +330,7 @@ UC = [
                    ('sequencia-lembrete-avaliacao.png', 'Diagrama de sequência — Lembrar Avaliação Pendente')],
     ),
     dict(
-        id='#016', nome='Denunciar Conteúdo', tipo='Básico', atores='Usuário',
+        id='#016', nome='Denunciar Conteúdo', tipo='Configuração', atores='Usuário',
         descricao='Permite que o usuário denuncie posts, apresentações, eventos ou usuários que violem as regras da comunidade.',
         pre=['Usuário autenticado;', 'Alvo existente e de outro usuário.'],
         pos=['Denúncia registrada como "Pendente";', 'Administradores notificados;', 'Atividade no histórico do denunciante.'],
@@ -349,7 +349,7 @@ UC = [
         prototipo=['Janela "Denunciar" com lista de motivos, campo de detalhes e botão "Enviar".'],
     ),
     dict(
-        id='#017', nome='Conectar-se a Usuários', tipo='Básico', atores='Usuário',
+        id='#017', nome='Conectar-se a Usuários', tipo='Configuração', atores='Usuário',
         descricao='Permite seguir e deixar de seguir pessoas e consultar quem o usuário segue e quem o segue. Seguir define o público "seguidores".',
         pre=['Usuário autenticado.'],
         pos=['Conexão criada ou removida;', 'Pessoa seguida notificada.'],
@@ -366,7 +366,7 @@ UC = [
         prototipo=['Botão "Seguir"/"Seguindo" no perfil;', 'Listas de seguindo e seguidores.'],
     ),
     dict(
-        id='#018', nome='Conversar', tipo='Básico', atores='Usuário',
+        id='#018', nome='Conversar', tipo='Configuração', atores='Usuário',
         descricao='Permite conversar em privado com outro usuário.',
         pre=['Usuário autenticado.'],
         pos=['Mensagem registrada;', 'Conversa marcada como lida para quem a abriu.'],
@@ -384,7 +384,7 @@ UC = [
         prototipo=['Lista de conversas;', 'Tela de mensagens com campo de texto e botão enviar.'],
     ),
     dict(
-        id='#019', nome='Visualizar Notificações', tipo='Básico', atores='Usuário',
+        id='#019', nome='Visualizar Notificações', tipo='Configuração', atores='Usuário',
         descricao='Exibe os avisos do usuário: boas-vindas, novos seguidores, novas mensagens, confirmações de presença nos seus eventos, lembretes de avaliação, avisos de moderação e, para administradores, novas denúncias.',
         pre=['Usuário autenticado.'],
         pos=['Notificação marcada como lida quando aberta.'],
@@ -401,7 +401,7 @@ UC = [
         prototipo=['Painel lateral com a lista, destacando as não lidas.'],
     ),
     dict(
-        id='#020', nome='Pesquisar', tipo='Básico', atores='Usuário',
+        id='#020', nome='Pesquisar', tipo='Configuração', atores='Usuário',
         descricao='Permite encontrar usuários e posts por texto.',
         pre=['Usuário autenticado.'],
         pos=['Resultados exibidos.'],
@@ -417,7 +417,7 @@ UC = [
         prototipo=['Campo de busca;', 'Resultados separados por usuários e posts.'],
     ),
     dict(
-        id='#021', nome='Consultar Histórico', tipo='Básico', atores='Usuário',
+        id='#021', nome='Consultar Histórico', tipo='Configuração', atores='Usuário',
         descricao='Exibe as atividades realizadas pelo usuário no Meets.',
         pre=['Usuário autenticado.'],
         pos=['Histórico exibido.'],
@@ -430,7 +430,7 @@ UC = [
         prototipo=['Lista cronológica com ícone por tipo de atividade.'],
     ),
     dict(
-        id='#022', nome='Gerenciar Configurações', tipo='Básico', atores='Usuário',
+        id='#022', nome='Gerenciar Configurações', tipo='Configuração', atores='Usuário',
         descricao='Permite ajustar as preferências e trocar a senha.',
         pre=['Usuário autenticado.'],
         pos=['Preferências ou senha atualizadas.'],
@@ -448,7 +448,7 @@ UC = [
         prototipo=['Interruptores "Notificações" e "Modo escuro";', 'Seção "Alterar senha";', 'Seção "Desativar conta".'],
     ),
     dict(
-        id='#023', nome='Remover Conteúdo Impróprio', tipo='Básico', atores='Administrador',
+        id='#023', nome='Remover Conteúdo Impróprio', tipo='Configuração', atores='Administrador',
         descricao='Permite ao administrador excluir qualquer post ou evento que viole as regras, diretamente ou como ação de uma denúncia procedente (#013).',
         pre=['Administrador autenticado;', 'Conteúdo existente.'],
         pos=['Conteúdo excluído;', 'Autor notificado com o motivo;', 'Ação registrada no log administrativo.'],
@@ -466,3 +466,118 @@ UC = [
         prototipo=['Opção "Remover (moderação)" no menu ⋮ do cartão;', 'Janela de confirmação avisando que o autor será notificado.'],
     ),
 ]
+
+
+# ---------------------------------------------------------------------------
+# Cenários dos casos "Manter" (modelo da professora: 5.2.1 Cenário: Cadastrar...,
+# Editar..., Excluir..., Buscar...). Quando um caso tem cenários, o fluxo principal e os
+# fluxos alternativos acima não são impressos; cada cenário traz os seus.
+# (nome, pré, pós, entradas, saídas, fluxo, [(fluxo alternativo, passos)], protótipo)
+CENARIOS = {
+    '#009': [
+        ('Cadastrar Post', ['Usuário autenticado.'],
+         ['Post criado;', 'Atividade registrada no histórico.'],
+         ['Título (opcional, até 160);', 'Texto (obrigatório, até 5.000);', 'Imagem opcional;', 'Visibilidade e, se "selecionados", as pessoas.'],
+         ['Post publicado no feed conforme a visibilidade.'],
+         ['O usuário toca em "Criar" e escolhe "Post";', 'Preenche o texto, adiciona imagem (com editor de corte) e escolhe a visibilidade;', 'Toca em "Publicar";', 'O sistema valida os dados;', 'Se algum dado for inválido, ir para o Fluxo Alternativo 1;', 'O sistema grava o post e registra no histórico;', 'O post aparece no feed das pessoas que podem vê-lo.'],
+         [('Dados inválidos', ['Texto vazio ou acima do limite;', 'O sistema recusa e o aplicativo destaca o campo;', 'Volta ao passo 2.'])],
+         ['Tela "Criar" com abas post, apresentação e evento;', 'Campos de título e texto, botão de imagem e seletor de visibilidade;', 'Botão "Publicar".']),
+        ('Editar Post', ['Usuário autenticado;', 'O usuário é o autor do post.'],
+         ['Post alterado.'],
+         ['Texto, imagem e visibilidade.'],
+         ['Post atualizado no feed.'],
+         ['O autor abre o menu ⋮ do post e escolhe "Editar";', 'Altera texto, imagem ou visibilidade;', 'Toca em "Salvar";', 'O sistema confirma que é o autor e valida os dados;', 'Se algum dado for inválido, ir para o Fluxo Alternativo 1;', 'O sistema grava a alteração e o post atualizado aparece no feed.'],
+         [('Dados inválidos', ['Texto vazio ou acima do limite;', 'O sistema recusa e o aplicativo destaca o campo;', 'Volta ao passo 2.'])],
+         ['Mesmo formulário da criação, preenchido com os dados do post;', 'Botão "Salvar".']),
+        ('Excluir Post', ['Usuário autenticado;', 'O usuário é o autor do post.'],
+         ['Post removido com curtidas e comentários;', 'Exclusão registrada no histórico.'],
+         [], [],
+         ['O autor abre o menu ⋮ do post e escolhe "Excluir";', 'O aplicativo pede confirmação;', 'Se o autor cancelar, ir para o Fluxo Alternativo 1;', 'O autor confirma;', 'O sistema remove o post com curtidas e comentários e registra no histórico.'],
+         [('Cancelar exclusão', ['O autor toca em "Cancelar";', 'Nada é alterado e o caso termina.'])],
+         ['Menu ⋮ do post com a opção "Excluir";', 'Caixa de confirmação.']),
+        ('Buscar Posts', ['Usuário autenticado.'], [],
+         [], ['Lista dos posts do usuário, do mais recente ao mais antigo.'],
+         ['O usuário abre o próprio perfil;', 'O sistema lista os posts do usuário, do mais recente ao mais antigo;', 'O usuário toca em um post;', 'O sistema exibe o post com curtidas, comentários e compartilhamentos.'],
+         [],
+         ['Aba de publicações do perfil;', 'Tela de detalhe do post.']),
+    ],
+    '#010': [
+        ('Consultar Perfil', ['Usuário autenticado.'], [],
+         [], ['Perfil com foto, nome, cargo, cidade, biografia, publicações, eventos e seguidores.'],
+         ['O usuário abre a aba "Perfil";', 'O sistema exibe os dados, as publicações e os eventos do usuário.'],
+         [],
+         ['Foto, nome, cargo, cidade e biografia;', 'Abas de publicações e eventos.']),
+        ('Editar Perfil', ['Usuário autenticado.'], ['Perfil atualizado.'],
+         ['Nome, cargo, cidade/UF, número, foto e biografia.'], ['Perfil atualizado.'],
+         ['O usuário toca em "Editar perfil";', 'Altera os campos e, se quiser, a foto (com editor de corte);', 'Toca em "Salvar";', 'O sistema valida os dados;', 'Se algum dado for inválido, ir para o Fluxo Alternativo 1;', 'O sistema grava e o aplicativo exibe o perfil atualizado.'],
+         [('Dados inválidos', ['Nome fora do limite (2 a 120 caracteres) ou biografia acima de 1.000;', 'O sistema recusa e o aplicativo destaca o campo;', 'Volta ao passo 2.'])],
+         ['Formulário com nome, cargo, cidade/UF, número, foto e biografia;', 'Botão "Salvar".']),
+        ('Visualizar e Compartilhar Perfil de Outro Usuário', ['Usuário autenticado;', 'A outra conta está ativa.'], ['Compartilhamento registrado, quando houver.'],
+         [], ['Perfil público com publicações visíveis e médias como apresentador;', 'Link do perfil.'],
+         ['O usuário toca no nome ou na foto de alguém;', 'O sistema exibe o perfil público, as publicações visíveis e as médias como apresentador;', 'O usuário pode seguir (#017), conversar (#018) ou denunciar (#016);', 'Para compartilhar, o usuário escolhe "Compartilhar perfil";', 'O aplicativo gera o link e o sistema registra o compartilhamento.'],
+         [],
+         ['Perfil público com botões "Seguir", "Mensagem" e "Compartilhar".']),
+        ('Desativar Conta', ['Usuário autenticado.'], ['Conta desativada e sessão encerrada;', 'Conteúdo do usuário oculto.'],
+         ['Senha atual.'], ['Aviso de conta desativada.'],
+         ['Em Configurações, o usuário escolhe "Desativar conta";', 'O aplicativo mostra o aviso e pede a senha;', 'O usuário informa a senha e confirma;', 'O sistema confere a senha;', 'Se o usuário for o único administrador ativo, ir para o Fluxo Alternativo 1;', 'O sistema desativa a conta e encerra a sessão; somente um administrador pode reativar.'],
+         [('Único administrador', ['Quem tenta desativar é o único administrador ativo;', 'O sistema recusa a desativação e o caso termina.'])],
+         ['Aviso de desativação com campo de senha;', 'Botão "Desativar conta".']),
+    ],
+    '#011': [
+        ('Cadastrar Evento', ['Usuário autenticado.'],
+         ['Evento criado;', 'Organizador registrado como anfitrião do evento.'],
+         ['Título, descrição e imagem;', 'Data, horário de início e de fim;', 'Local (CEP, UF e número);', 'Visibilidade.'],
+         ['Evento publicado no feed e no calendário.'],
+         ['O usuário toca em "Criar" e escolhe "Evento";', 'Preenche os dados; ao informar o CEP, o endereço é completado;', 'Toca em "Publicar";', 'O sistema valida campos obrigatórios, data (não anterior a hoje), horário (fim após início) e UF do local;', 'Se algum dado for inválido, ir para o Fluxo Alternativo 1;', 'O sistema grava o evento e registra o organizador como anfitrião;', 'O evento aparece no feed e no calendário.'],
+         [('Dados inválidos', ['Algum campo obrigatório falta, a data já passou, o fim é antes do início ou a UF difere do perfil;', 'O sistema recusa e o aplicativo destaca os campos em vermelho;', 'Volta ao passo 2.'])],
+         ['Formulário com título, descrição, imagem, data, início, fim, CEP, UF, número e visibilidade;', 'Botão "Publicar".']),
+        ('Cadastrar Apresentação', ['Usuário autenticado.'], ['Apresentação criada com os apresentadores vinculados.'],
+         ['Título e descrição;', 'Data, horário de início e de fim;', 'Evento vinculado e apresentadores.'],
+         ['Apresentação publicada no feed.'],
+         ['O usuário toca em "Criar" e escolhe "Apresentação";', 'Informa título, descrição, data, horários, evento vinculado e apresentadores;', 'Toca em "Publicar";', 'O sistema valida como no cenário Cadastrar Evento;', 'Se algum dado for inválido, ir para o Fluxo Alternativo 1;', 'O sistema grava a apresentação e seus apresentadores.'],
+         [('Dados inválidos', ['Algum campo obrigatório falta, a data já passou ou o fim é antes do início;', 'O sistema recusa e o aplicativo destaca os campos;', 'Volta ao passo 2.'])],
+         ['Aba "Apresentação" da tela "Criar", com seleção do evento e dos apresentadores.']),
+        ('Editar Evento', ['Usuário autenticado;', 'O usuário é o organizador do evento.'], ['Evento alterado.'],
+         ['Os mesmos campos do cadastro.'], ['Evento atualizado no feed e no calendário.'],
+         ['O organizador abre o evento e escolhe "Editar";', 'Altera os dados e toca em "Salvar";', 'O sistema revalida data, horários e UF;', 'Se algum dado for inválido, ir para o Fluxo Alternativo 1;', 'O sistema grava a alteração.'],
+         [('Dados inválidos', ['A data já passou, o fim é antes do início ou a UF difere do perfil;', 'O sistema recusa e o aplicativo destaca os campos;', 'Volta ao passo 2.'])],
+         ['Formulário do evento preenchido;', 'Botão "Salvar".']),
+        ('Excluir Evento', ['Usuário autenticado;', 'O usuário é o organizador do evento.'], ['Evento removido;', 'Exclusão registrada no histórico.'],
+         [], [],
+         ['O organizador abre o evento e escolhe "Excluir";', 'O aplicativo pede confirmação;', 'Se o organizador cancelar, ir para o Fluxo Alternativo 1;', 'O organizador confirma;', 'O sistema remove o evento e registra no histórico.'],
+         [('Cancelar exclusão', ['O organizador toca em "Cancelar";', 'Nada é alterado e o caso termina.'])],
+         ['Menu do organizador com a opção "Excluir";', 'Caixa de confirmação.']),
+        ('Buscar Eventos no Calendário', ['Usuário autenticado.'], [],
+         [], ['Eventos e apresentações que o usuário organiza ou de que participa, por data.'],
+         ['O usuário abre "Calendário";', 'O sistema lista os eventos e apresentações que ele organiza ou de que participa, marcando os dias no mês;', 'O usuário toca em um dia ou em um evento;', 'O aplicativo abre o detalhe do evento.'],
+         [],
+         ['Calendário mensal com os dias marcados e a lista de eventos do dia.']),
+    ],
+    '#012': [
+        ('Buscar Usuários', ['Administrador autenticado.'], [],
+         ['Filtros: texto, situação e tipo.'], ['Lista de usuários;', 'Ficha do usuário com o histórico de ações administrativas.'],
+         ['O administrador abre "Manter usuários" no menu;', 'O sistema lista as contas com nome, e-mail, tipo e situação;', 'O administrador filtra ou pesquisa e abre uma conta;', 'O sistema exibe a ficha e o histórico de ações administrativas.'],
+         [],
+         ['Busca e filtros (situação e tipo);', 'Lista com situação colorida.']),
+        ('Cadastrar Usuário', ['Administrador autenticado.'], ['Conta, perfil e configurações criados;', 'Ação registrada no log administrativo.'],
+         ['Nome, e-mail, senha inicial, tipo, cargo, cidade e biografia.'], ['Nova conta na lista.'],
+         ['O administrador toca em "Novo usuário";', 'Preenche os dados e salva;', 'O sistema verifica se o e-mail é único;', 'Se o e-mail já existir, ir para o Fluxo Alternativo 1;', 'O sistema cria a conta, o perfil e as configurações e registra a ação.'],
+         [('E-mail duplicado', ['O e-mail informado já pertence a outra conta;', 'O sistema recusa;', 'Volta ao passo 2.'])],
+         ['Formulário de usuário.']),
+        ('Editar ou Promover Usuário', ['Administrador autenticado.'], ['Conta alterada;', 'Ação registrada no log administrativo.'],
+         ['Dados da conta e tipo (usuário ou administrador).'], ['Ficha atualizada.'],
+         ['O administrador abre a conta e escolhe "Editar";', 'Altera os dados ou o tipo (usuário/administrador) e salva;', 'Se a mudança rebaixar o único administrador ativo, ir para o Fluxo Alternativo 1;', 'O sistema grava e registra a ação.'],
+         [('Único administrador', ['A alteração rebaixaria o único administrador ativo;', 'O sistema recusa e o caso termina.'])],
+         ['Formulário de usuário preenchido.']),
+        ('Desativar Usuário', ['Administrador autenticado;', 'A conta está ativa.'], ['Conta bloqueada e conteúdo oculto;', 'Usuário avisado;', 'Ação registrada no log administrativo.'],
+         ['Motivo da desativação.'], ['Situação "desativada" na lista.'],
+         ['O administrador abre a conta e escolhe "Desativar";', 'Informa o motivo e confirma;', 'Se a conta for a dele mesmo ou a do único administrador ativo, ir para o Fluxo Alternativo 1;', 'O sistema bloqueia a conta, oculta o conteúdo, avisa o usuário e registra a ação.'],
+         [('Desativação não permitida', ['A conta é a do próprio administrador ou a do único administrador ativo;', 'O sistema recusa e o caso termina.'])],
+         ['Botão "Desativar" e campo de motivo.']),
+        ('Reativar Usuário', ['Administrador autenticado;', 'A conta está desativada.'], ['Conta liberada e conteúdo visível de novo;', 'Ação registrada no log administrativo.'],
+         [], ['Situação "ativa" na lista.'],
+         ['O administrador abre uma conta desativada e escolhe "Reativar";', 'O sistema libera a conta, o conteúdo volta a aparecer e a ação é registrada.'],
+         [],
+         ['Botão "Reativar" e histórico de ações.']),
+    ],
+}
