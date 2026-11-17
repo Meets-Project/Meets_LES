@@ -344,6 +344,20 @@ class MeetsDoc:
             r = leg.add_run(legenda); r.italic = True; r.font.size = Pt(9)
             leg.paragraph_format.space_after = Pt(10)
 
+    def imagens_lado(self, nomes, largura_cm=6.5, legenda=None):
+        par = self._new_paragraph()
+        par.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        par.paragraph_format.keep_with_next = True
+        for i, nome in enumerate(nomes):
+            if i:
+                par.add_run('   ')
+            par.add_run().add_picture(os.path.join(DIAGRAMAS, nome), width=Cm(largura_cm))
+        if legenda:
+            leg = self._new_paragraph()
+            leg.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            r = leg.add_run(legenda); r.italic = True; r.font.size = Pt(9)
+            leg.paragraph_format.space_after = Pt(10)
+
     def _quebra_secao(self, paisagem):
         """Encerra a seção atual (retrato ou paisagem) com cabeçalho e rodapé iguais aos do documento."""
         sect = copy.deepcopy(self._sectPr)

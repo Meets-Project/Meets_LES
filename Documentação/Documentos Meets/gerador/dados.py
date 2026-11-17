@@ -213,7 +213,7 @@ IMPL = {
     'RF20': 'Tela CreateScreen, aba evento (título, descrição, imagem, data, início, fim, CEP, UF, número e visibilidade). API POST /content grava em events e inclui o organizador em event_participants como anfitrião.',
     'RF21': 'Tela EventDetailScreen, menu do organizador (Editar / Excluir com confirmação). API PUT /events/:id e DELETE /events/:id, permitidos somente ao organizador.',
     'RF22': 'Botão "Confirmar presença" em EventDetailScreen. API POST /events/:id/participate (alternância) e GET /events/:id/participants sobre event_participants; gera notificação para o organizador.',
-    'RF23': 'Tela CalendarScreen (calendário mensal com marcação dos dias). API GET /calendar devolve os eventos organizados ou confirmados pelo usuário.',
+    'RF23': 'Tela CalendarScreen (datas da agenda e, ao tocar em uma data, os eventos do dia). API GET /calendar devolve os eventos organizados ou confirmados pelo usuário.',
     'RF24': 'Tela EventRatingScreen (estrelas, comentário, público ou anônimo). API POST /ratings/events grava em event_ratings (uma por pessoa e evento) e GET /ratings/events/:eventId devolve a média.',
     'RF25': 'Tela PresentationRatingScreen (apresentador, estrelas, seis atributos de 0 a 99, comentário e anonimato). API GET /ratings/available e POST /ratings/presentations gravam em presentation_ratings (atributos em skills, jsonb).',
     'RF26': 'Rotina notifyFinished em server.js, executada na inicialização e a cada 60 segundos (setInterval), com um INSERT ... SELECT na tabela notifications; ensureRatingNotifications em repository.js repete a verificação quando o usuário abre as notificações.',

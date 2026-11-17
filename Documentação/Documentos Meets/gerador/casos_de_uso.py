@@ -237,7 +237,7 @@ UC = [
             ('Consultar calendário', ['O usuário abre "Calendário";', 'O sistema lista eventos e apresentações que ele organiza ou de que participa, por data.']),
             ('Dados inválidos', ['Algum campo obrigatório falta, a data já passou, o fim é antes do início ou a UF difere do perfil;', 'O sistema recusa e o aplicativo destaca os campos em vermelho.']),
         ],
-        prototipo=['Formulário com título, descrição, imagem, data, início, fim, CEP, UF, número e visibilidade;', 'Botão "Publicar";', 'Calendário mensal com os eventos do dia.'],
+        prototipo=['Formulário com título, descrição, imagem, data, início, fim, CEP, UF, número e visibilidade;', 'Botão "Publicar";', 'Calendário com as datas da agenda e os eventos do dia.'],
     ),
     dict(
         id='#012', nome='Manter Usuários', tipo='Configuração', atores='Administrador',
@@ -549,9 +549,9 @@ CENARIOS = {
          ['Menu do organizador com a opção "Excluir";', 'Caixa de confirmação.']),
         ('Buscar Eventos no Calendário', ['Usuário autenticado.'], [],
          [], ['Eventos e apresentações que o usuário organiza ou de que participa, por data.'],
-         ['O usuário abre "Calendário";', 'O sistema lista os eventos e apresentações que ele organiza ou de que participa, marcando os dias no mês;', 'O usuário toca em um dia ou em um evento;', 'O aplicativo abre o detalhe do evento.'],
+         ['O usuário abre "Calendário" pelo ícone do cabeçalho;', 'O sistema lista as datas dos eventos e apresentações que ele organiza ou de que participa;', 'O usuário toca em uma data;', 'O aplicativo exibe os eventos e apresentações do dia, com horário, local e situação.'],
          [],
-         ['Calendário mensal com os dias marcados e a lista de eventos do dia.']),
+         ['Lista das datas da agenda; ao tocar em uma data, aparecem os eventos e apresentações do dia, com a situação (por exemplo, encerrado).']),
     ],
     '#012': [
         ('Buscar Usuários', ['Administrador autenticado.'], [],

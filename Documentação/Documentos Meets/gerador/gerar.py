@@ -18,6 +18,26 @@ def telas(padrao):
     return [os.path.relpath(f, os.path.join(DOCS, 'diagramas_LES')) for f in sorted(glob.glob(os.path.join(base, padrao)))]
 
 
+def largura_tela(rel):
+    from PIL import Image
+    with Image.open(os.path.join(DOCS, 'diagramas_LES', rel)) as im:
+        w, h = im.size
+    return 15.0 if w > h else 6.5
+
+
+def inserir_telas(d, imgs, nome, figura):
+    if not imgs:
+        return figura
+    retrato = [i for i in imgs if largura_tela(i) < 10]
+    if len(retrato) == len(imgs) and len(imgs) > 1:
+        d.imagens_lado(imgs, 6.5 if len(imgs) == 2 else 5.0, legenda=f'Figura {figura} – Telas: {nome}')
+        return figura + 1
+    for img in imgs:
+        d.imagem(img, largura_cm=largura_tela(img), legenda=f'Figura {figura} – Tela: {nome}', altura_max_cm=14)
+        figura += 1
+    return figura
+
+
 def saida(nome):
     return os.path.join(DOCS, nome)
 
@@ -355,9 +375,7 @@ def casos_de_uso():
                     d.numerada(passos)
                 d.rotulo('Protótipo de Interface:')
                 d.bullets(proto)
-                for img in telas(f"{u['id'][1:]}-c{k}*.png"):
-                    d.imagem(img, largura_cm=8, legenda=f'Figura {figura} – Tela: {nome}', altura_max_cm=12)
-                    figura += 1
+                figura = inserir_telas(d, telas(f"{u['id'][1:]}-c{k}*.png"), nome, figura)
         else:
             for rot, chave in (('Pré Condições:', 'pre'), ('Pós Condições:', 'pos'), ('Entradas:', 'entradas'), ('Saídas:', 'saidas')):
                 d.rotulo(rot)
@@ -369,9 +387,7 @@ def casos_de_uso():
                 d.numerada(passos)
             d.rotulo('Protótipo de Interface:')
             d.bullets(u['prototipo'])
-            for img in [t for t in telas(f"{u['id'][1:]}*.png") if '-c' not in os.path.basename(t)]:
-                d.imagem(img, largura_cm=8, legenda=f"Figura {figura} – Tela: {u['nome']}", altura_max_cm=12)
-                figura += 1
+            figura = inserir_telas(d, [t for t in telas(f"{u['id'][1:]}*.png") if '-c' not in os.path.basename(t)], u['nome'], figura)
         for img, leg in u.get('diagramas', []):
             d.imagem(img, largura_cm=16, legenda=f'Figura {figura} – {leg}', altura_max_cm=20)
             figura += 1
