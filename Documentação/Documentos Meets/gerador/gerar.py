@@ -38,6 +38,54 @@ def inserir_telas(d, imgs, nome, figura):
     return figura
 
 
+DH = 'apresentacao/drawio-hd/'
+
+
+def deitada(rel):
+    from PIL import Image
+    with Image.open(os.path.join(DOCS, 'diagramas_LES', rel)) as im:
+        w, h = im.size
+    return w > h
+
+
+def figuras(d, lista, fig, ultima=False):
+    """Insere diagramas; os deitados vão em páginas paisagem (agrupados), os em pé em páginas retrato.
+    Devolve (próximo número de figura, terminou_em_paisagem)."""
+    i = 0
+    paisagem = False
+    while i < len(lista):
+        img, leg = lista[i]
+        if deitada(img):
+            d.inicio_paisagem()
+            while i < len(lista) and deitada(lista[i][0]):
+                img, leg = lista[i]
+                d.imagem(img, largura_cm=23.5, legenda=f'Figura {fig} – {leg}', altura_max_cm=13.3)
+                fig += 1
+                i += 1
+            fim = ultima and i == len(lista)
+            d.fim_paisagem(ultima=fim)
+            paisagem = True
+        else:
+            d.imagem(img, largura_cm=17, legenda=f'Figura {fig} – {leg}', altura_max_cm=20)
+            fig += 1
+            i += 1
+            paisagem = False
+    return fig, paisagem
+
+
+DIAG_UC = {
+    '#005': [(DH + 'atividade-005-avaliar-evento-hd.png', 'Diagrama de atividades — Avaliar Evento'),
+             (DH + 'sequencia-005-avaliar-evento-hd.png', 'Diagrama de sequência — Avaliar Evento')],
+    '#006': [(DH + 'atividade-006-avaliar-apresentador-hd.png', 'Diagrama de atividades — Avaliar Apresentador'),
+             (DH + 'sequencia-006-avaliar-apresentador-hd.png', 'Diagrama de sequência — Avaliar Apresentador')],
+    '#007': [(DH + 'sequencia-007-ranking-hd.png', 'Diagrama de sequência — Visualizar Ranking de Apresentadores')],
+    '#008': [(DH + 'sequencia-008-dashboards-hd.png', 'Diagrama de sequência — Visualizar Dashboards')],
+    '#013': [(DH + 'sequencia-013-denuncias-hd.png', 'Diagrama de sequência — Analisar Denúncias')],
+    '#015': [(DH + 'atividade-015-lembrete-hd.png', 'Diagrama de atividades — Lembrar Avaliação Pendente'),
+             (DH + 'sequencia-015-lembrete-hd.png', 'Diagrama de sequência — Lembrar Avaliação Pendente')],
+}
+
+
 def saida(nome):
     return os.path.join(DOCS, nome)
 
@@ -352,10 +400,12 @@ def casos_de_uso():
 
     d.h1('Especificação dos Casos de Uso')
     figura = 2
+    veio_de_paisagem = False
     for n, u in enumerate(sorted(UC, key=lambda x: x['id'])):
-        if n:
-            d.page_break()
-        d.h2(f"Caso de uso {u['id']} – {u['nome']}")
+        h = d.h2(f"Caso de uso {u['id']} – {u['nome']}")
+        if n and not veio_de_paisagem:
+            h.paragraph_format.page_break_before = True
+        veio_de_paisagem = False
         d.p(f"**Descrição:** {u['descricao']}")
         d.p(f"**Tipo:** {u['tipo']}", space_after=2)
         d.p(f"**Atores que iniciam:** {u['atores']}", space_after=2)
@@ -388,9 +438,8 @@ def casos_de_uso():
             d.rotulo('Protótipo de Interface:')
             d.bullets(u['prototipo'])
             figura = inserir_telas(d, [t for t in telas(f"{u['id'][1:]}*.png") if '-c' not in os.path.basename(t)], u['nome'], figura)
-        for img, leg in u.get('diagramas', []):
-            d.imagem(img, largura_cm=16, legenda=f'Figura {figura} – {leg}', altura_max_cm=20)
-            figura += 1
+        if u['id'] in DIAG_UC:
+            figura, veio_de_paisagem = figuras(d, DIAG_UC[u['id']], figura)
     return d
 
 
@@ -401,19 +450,18 @@ def modelagem():
     d.h1('Objetivo')
     d.p('Reunir os modelos estruturais e comportamentais do Meets — MER, DER e diagramas de classe — gerados a partir do banco de dados migrado e do código. As fontes editáveis (Mermaid e Graphviz) ficam em "diagramas_LES/fontes".')
     d.h1('Modelo Entidade-Relacionamento (MER)', quebra=True)
-    d.p('Modelo conceitual em notação de Chen. A Apresentação é uma especialização de Post; as avaliações são relacionamentos N:N entre Usuário e Evento e entre Usuário e Apresentação, com atributos próprios. O Perfil e a Configuração são 1:1 com o Usuário.')
-    d.imagem('mer-conceitual.png', largura_cm=17, legenda='Figura 1 – MER conceitual', altura_max_cm=18.5)
-    d.h1('Diagrama Entidade-Relacionamento (DER)', quebra=True)
+    d.p('Modelo conceitual em notação de Chen. A Apresentação é uma especialização de Post; as avaliações são relacionamentos N:N entre Usuário e Evento e entre Usuário e Apresentação, com atributos próprios. O Perfil e a Configuração são 1:1 com o Usuário. Salvar e favoritar são relacionamentos separados.')
+    fig, _ = figuras(d, [(DH + 'mer-geral-hd.png', 'MER conceitual')], 1)
+    d.h1('Diagrama Entidade-Relacionamento (DER)')
     d.p('Modelo lógico do PostgreSQL, dividido em três partes. Todas as chaves primárias são UUID. Contas não são excluídas (situação "deactivated"), por isso as tabelas de conteúdo mantêm as chaves estrangeiras para users.')
-    for i, (img, leg) in enumerate([
-        ('der-1-usuarios-rede-comunicacao.png', 'DER – Usuários, rede e comunicação'),
-        ('der-2-conteudo-interacoes.png', 'DER – Conteúdo e interações'),
-        ('der-3-avaliacao-moderacao.png', 'DER – Avaliação e moderação'),
-    ], 2):
-        d.imagem(img, largura_cm=17, legenda=f'Figura {i} – {leg}', altura_max_cm=18.5)
+    fig, _ = figuras(d, [
+        (DH + 'der-geral-1-usuarios-rede-comunicacao-hd.png', 'DER – Usuários, rede e comunicação'),
+        (DH + 'der-geral-2-conteudo-interacoes-hd.png', 'DER – Conteúdo e interações'),
+        (DH + 'der-geral-3-avaliacao-moderacao-hd.png', 'DER – Avaliação e moderação'),
+    ], fig)
     d.h1('Diagramas de Classe', quebra=True)
-    d.p('Classes de domínio com os atributos persistidos e as operações expostas pela API/repositórios.')
-    fig = 5
+    d.p('Classes de domínio com os atributos persistidos e as operações expostas pela API e pelos repositórios. Primeiro a visão geral do sistema; depois, as classes de cada caso de uso detalhado, com os nomes usados no código.')
+    d.h2('Visão geral')
     for img, leg in [
         ('classe-usuarios-conteudo.png', 'Classes – Usuários e conteúdo'),
         ('classe-interacoes-avaliacoes.png', 'Classes – Interações e avaliações'),
@@ -422,8 +470,17 @@ def modelagem():
     ]:
         d.imagem(img, largura_cm=17, legenda=f'Figura {fig} – {leg}', altura_max_cm=18.5)
         fig += 1
-    d.h1('Diagramas de Sequência', quebra=True)
-    d.p('Os diagramas de sequência acompanham as especificações dos casos de uso #005, #006, #013 e #015 no documento "Casos de Uso Meets".')
+    d.h2('Por caso de uso')
+    fig, _ = figuras(d, [
+        (DH + 'classe-015-lembrete-hd.png', 'Classes – #015 Lembrar Avaliação Pendente'),
+        (DH + 'classe-005-avaliar-evento-hd.png', 'Classes – #005 Avaliar Evento'),
+        (DH + 'classe-006-avaliar-apresentador-hd.png', 'Classes – #006 Avaliar Apresentador'),
+        (DH + 'classe-007-ranking-hd.png', 'Classes – #007 Visualizar Ranking'),
+        (DH + 'classe-008-dashboards-hd.png', 'Classes – #008 Visualizar Dashboards'),
+        (DH + 'classe-013-denuncias-hd.png', 'Classes – #013 Analisar Denúncias'),
+    ], fig)
+    d.h1('Diagramas de Sequência')
+    d.p('Os diagramas de sequência acompanham as especificações dos casos de uso #005, #006, #007, #008, #013 e #015 no documento "Casos de Uso Meets". Eles usam os nomes de funções, rotas e tabelas do código, e as etiquetas FP, FA e FE indicam o fluxo principal, os fluxos alternativos e as exceções.')
     return d
 
 
